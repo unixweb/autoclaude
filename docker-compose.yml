@@ -110,6 +110,39 @@ services:
       retries: 5
       start_period: 30s
 
+  # ---------------------------------------------------------------------------
+  # E-Mail-Testing (Mailhog)
+  # ---------------------------------------------------------------------------
+  # Mailhog fängt alle ausgehenden E-Mails ab und stellt sie in einer Web-UI dar.
+  # Ideal für Entwicklung und Testing, ohne echte E-Mails zu versenden.
+  mailhog:
+    # Mailhog Docker Image
+    image: mailhog/mailhog:latest
+
+    # Container-Name für einfachere Identifikation
+    container_name: app_mailhog
+
+    # Neustart-Richtlinie bei Fehlern oder System-Neustart
+    restart: unless-stopped
+
+    # Port-Mapping: Host:Container
+    # SMTP-Port für E-Mail-Empfang und Web-UI für Anzeige
+    ports:
+      - "1025:1025"   # SMTP-Server für E-Mail-Versand
+      - "8025:8025"   # Web-UI für E-Mail-Anzeige
+
+    # Netzwerk-Zuordnung für Container-zu-Container-Kommunikation
+    networks:
+      - app_network
+
+    # Health Check: Überprüft, ob die Web-UI erreichbar ist
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 # =============================================================================
 # NETZWERKE (Networks)
 # =============================================================================
