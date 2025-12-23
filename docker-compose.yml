@@ -191,5 +191,4 @@ volumes:
 # - redis: Cache-Server
 # - nginx: Reverse Proxy / Load Balancer
 # - adminer: Datenbank-Verwaltung
-# - mailhog: E-Mail-Testing
 # =============================================================================
