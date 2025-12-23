@@ -38,9 +38,14 @@ services:
     # Sensible Daten sollten über .env-Datei oder Secrets geladen werden
     environment:
       - NODE_ENV=development
+      # Datenbank-Verbindung
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=app_database
+      # E-Mail-Konfiguration (Mailhog für Testing)
+      # Alle E-Mails werden von Mailhog abgefangen und in der Web-UI angezeigt
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
 
     # Volumes: Persistente Datenspeicherung und Code-Mounting
     # Bei Entwicklung: lokaler Code wird in Container gemountet
