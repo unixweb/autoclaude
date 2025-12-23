@@ -1,0 +1,157 @@
+# Docker Compose Konfiguration
+# ============================
+# Diese Datei definiert eine Multi-Container-Umgebung mit Docker Compose.
+# Version 3.8 bietet moderne Funktionen wie Health Checks und Deploy-Optionen.
+
+version: "3.8"
+
+# =============================================================================
+# DIENSTE (Services)
+# =============================================================================
+# Hier werden alle Container definiert, die zusammen die Anwendung bilden.
+# Jeder Dienst kann einen eigenen Container starten und konfigurieren.
+
+services:
+  # ---------------------------------------------------------------------------
+  # Web-Anwendung
+  # ---------------------------------------------------------------------------
+  # Der Haupt-Webserver der Anwendung.
+  # Beispiel: Node.js, Python Flask, PHP, etc.
+  web:
+    # Docker Image - hier ein generisches nginx als Beispiel
+    # Ersetzen Sie dies durch Ihr eigenes Image oder verwenden Sie 'build'
+    image: nginx:alpine
+
+    # Container-Name für einfachere Identifikation
+    container_name: app_web
+
+    # Neustart-Richtlinie bei Fehlern oder System-Neustart
+    # 'unless-stopped': Startet automatisch neu, außer manuell gestoppt
+    restart: unless-stopped
+
+    # Port-Mapping: Host:Container
+    # Der Container-Port wird auf dem Host verfügbar gemacht
+    ports:
+      - "8080:80"    # Webserver auf Port 8080 erreichbar
+
+    # Umgebungsvariablen für die Anwendung
+    # Sensible Daten sollten über .env-Datei oder Secrets geladen werden
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=app_database
+
+    # Volumes: Persistente Datenspeicherung und Code-Mounting
+    # Bei Entwicklung: lokaler Code wird in Container gemountet
+    volumes:
+      - ./app:/usr/share/nginx/html:ro   # App-Dateien (read-only)
+      - web_logs:/var/log/nginx          # Log-Dateien persistent speichern
+
+    # Netzwerk-Zuordnung für Container-zu-Container-Kommunikation
+    networks:
+      - app_network
+
+    # Abhängigkeit: Web-Container startet erst, wenn DB bereit ist
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # Health Check: Überprüft, ob der Dienst korrekt funktioniert
+    # Docker kann unhealthy Container automatisch neu starten
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s      # Prüfung alle 30 Sekunden
+      timeout: 10s       # Timeout für einzelne Prüfung
+      retries: 3         # Anzahl Fehlversuche bis 'unhealthy'
+      start_period: 10s  # Wartezeit beim Start
+
+  # ---------------------------------------------------------------------------
+  # Datenbank
+  # ---------------------------------------------------------------------------
+  # PostgreSQL-Datenbank für die Anwendungsdaten.
+  # Persistente Speicherung über benanntes Volume.
+  db:
+    # PostgreSQL als Beispiel-Datenbank
+    # Alternativ: mysql, mariadb, mongodb, etc.
+    image: postgres:15-alpine
+
+    container_name: app_db
+
+    restart: unless-stopped
+
+    # Datenbank-Konfiguration über Umgebungsvariablen
+    # WICHTIG: In Produktion Passwörter über Secrets oder .env verwalten!
+    environment:
+      - POSTGRES_USER=app_user
+      - POSTGRES_PASSWORD=sicheres_passwort_hier_aendern
+      - POSTGRES_DB=app_database
+      - PGDATA=/var/lib/postgresql/data/pgdata
+
+    # Datenbank-Port (nur intern im Netzwerk verfügbar)
+    # Für externe Zugriffe: "5432:5432" verwenden
+    expose:
+      - "5432"
+
+    # Persistente Datenspeicherung der Datenbank
+    # Benanntes Volume für Datenerhalt bei Container-Neustart
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro  # Init-Skripte
+
+    networks:
+      - app_network
+
+    # Health Check für Datenbank-Verfügbarkeit
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d app_database"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# =============================================================================
+# NETZWERKE (Networks)
+# =============================================================================
+# Eigene Netzwerke für isolierte Container-Kommunikation.
+# Container im selben Netzwerk können sich über Namen erreichen.
+
+networks:
+  # Internes Netzwerk für die Anwendung
+  app_network:
+    driver: bridge
+    # Optionale IP-Konfiguration:
+    # ipam:
+    #   config:
+    #     - subnet: 172.20.0.0/16
+
+# =============================================================================
+# VOLUMES (Persistente Speicher)
+# =============================================================================
+# Benannte Volumes für Daten, die Container-Neustarts überleben sollen.
+# Docker verwaltet diese Volumes automatisch.
+
+volumes:
+  # Datenbank-Daten
+  db_data:
+    driver: local
+
+  # Web-Server Logs
+  web_logs:
+    driver: local
+
+# =============================================================================
+# ERWEITERUNG
+# =============================================================================
+# Um weitere Dienste hinzuzufügen:
+# 1. Neuen Service-Block unter 'services' erstellen
+# 2. Bei Bedarf zum 'app_network' hinzufügen
+# 3. Volumes für persistente Daten definieren
+# 4. depends_on für Abhängigkeiten setzen
+#
+# Beispiele für weitere Dienste:
+# - redis: Cache-Server
+# - nginx: Reverse Proxy / Load Balancer
+# - adminer: Datenbank-Verwaltung
+# - mailhog: E-Mail-Testing
+# =============================================================================
