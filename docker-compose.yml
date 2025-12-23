@@ -2,6 +2,14 @@
 # ============================
 # Diese Datei definiert eine Multi-Container-Umgebung mit Docker Compose.
 # Version 3.8 bietet moderne Funktionen wie Health Checks und Deploy-Optionen.
+#
+# KONFIGURATION:
+# Alle Umgebungsvariablen werden aus der .env-Datei geladen.
+# Kopieren Sie .env.example nach .env und passen Sie die Werte an:
+#   cp .env.example .env
+#
+# Variablen mit Standardwerten: ${VAR:-default}
+# Variablen ohne Standard (Pflichtfelder): ${VAR}
 
 version: "3.8"
 
@@ -35,17 +43,17 @@ services:
       - "8080:80"    # Webserver auf Port 8080 erreichbar
 
     # Umgebungsvariablen für die Anwendung
-    # Sensible Daten sollten über .env-Datei oder Secrets geladen werden
+    # Werte werden aus .env-Datei geladen (siehe .env.example)
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
       # Datenbank-Verbindung
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=app_database
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-app_database}
       # E-Mail-Konfiguration (Mailhog für Testing)
       # Alle E-Mails werden von Mailhog abgefangen und in der Web-UI angezeigt
-      - SMTP_HOST=mailhog
-      - SMTP_PORT=1025
+      - SMTP_HOST=${SMTP_HOST:-mailhog}
+      - SMTP_PORT=${SMTP_PORT:-1025}
 
     # Volumes: Persistente Datenspeicherung und Code-Mounting
     # Bei Entwicklung: lokaler Code wird in Container gemountet
@@ -86,12 +94,13 @@ services:
     restart: unless-stopped
 
     # Datenbank-Konfiguration über Umgebungsvariablen
-    # WICHTIG: In Produktion Passwörter über Secrets oder .env verwalten!
+    # Werte werden aus .env-Datei geladen (siehe .env.example)
+    # WICHTIG: POSTGRES_PASSWORD muss in .env gesetzt werden!
     environment:
-      - POSTGRES_USER=app_user
-      - POSTGRES_PASSWORD=sicheres_passwort_hier_aendern
-      - POSTGRES_DB=app_database
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_USER=${POSTGRES_USER:-app_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-app_database}
+      - PGDATA=${PGDATA:-/var/lib/postgresql/data/pgdata}
 
     # Datenbank-Port (nur intern im Netzwerk verfügbar)
     # Für externe Zugriffe: "5432:5432" verwenden
@@ -108,8 +117,9 @@ services:
       - app_network
 
     # Health Check für Datenbank-Verfügbarkeit
+    # Verwendet die Container-Umgebungsvariablen ($$VAR wird zu $VAR im Container)
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app_user -d app_database"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5

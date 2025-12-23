@@ -2,3 +2,7 @@
 .auto-claude/
 .worktrees/
 .claude_settings.json
+
+# Environment variables - contains sensitive credentials
+# Note: .env.example is intentionally NOT ignored (template for setup)
+.env
