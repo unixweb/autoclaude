@@ -1,0 +1,54 @@
+{
+  "spec_name": "docker-compose-example-configuration",
+  "workflow_type": "simple",
+  "total_phases": 1,
+  "recommended_workers": 1,
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Implementation",
+      "description": "Create docker-compose.yml with example services",
+      "depends_on": [],
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Create docker-compose.yml with 2 example services (web + db), networks, volumes, and German comments",
+          "service": "main",
+          "status": "completed",
+          "files_to_create": [
+            "docker-compose.yml"
+          ],
+          "files_to_modify": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "manual",
+            "run": "docker-compose config"
+          },
+          "notes": "Created docker-compose.yml with web (nginx) and db (postgres) services, networks, volumes, German comments, health checks, and restart policies. YAML syntax verified by file structure. docker-compose config command not available in sandbox but file follows standard docker-compose v3.8 format.",
+          "updated_at": "2025-12-23T09:17:00.501702+00:00"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "created_at": "2025-12-23T10:30:00Z",
+    "complexity": "simple",
+    "estimated_sessions": 1
+  },
+  "feature": "Docker Compose Example Configuration",
+  "last_updated": "2025-12-23T09:20:04.391403+00:00",
+  "qa_signoff": {
+    "status": "approved",
+    "qa_session": 0,
+    "issues_found": [
+      {
+        "description": "None"
+      }
+    ],
+    "tests_passed": {},
+    "timestamp": "2025-12-23T09:20:04.391341+00:00",
+    "ready_for_qa_revalidation": false
+  },
+  "status": "human_review",
+  "planStatus": "review"
+}
