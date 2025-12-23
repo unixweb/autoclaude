@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "002-add-mailhog-email-testing-service",
+  "state": "building",
+  "subtasks": {
+    "completed": 2,
+    "total": 5,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Add Mailhog Service",
+    "id": null,
+    "total": 3
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 4,
+    "started_at": "2025-12-23T16:54:51.182551"
+  },
+  "last_update": "2025-12-23T16:59:45.430462"
+}
