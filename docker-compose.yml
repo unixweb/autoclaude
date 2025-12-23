@@ -158,6 +158,43 @@ services:
       retries: 3
       start_period: 10s
 
+  # ---------------------------------------------------------------------------
+  # Datenbank-Verwaltung (Adminer)
+  # ---------------------------------------------------------------------------
+  # Adminer ist ein leichtgewichtiges Web-basiertes Datenbank-Management-Tool.
+  # Ermöglicht einfache Verwaltung der PostgreSQL-Datenbank über den Browser.
+  adminer:
+    # Adminer Docker Image
+    image: adminer:latest
+
+    # Container-Name für einfachere Identifikation
+    container_name: app_adminer
+
+    # Neustart-Richtlinie bei Fehlern oder System-Neustart
+    restart: unless-stopped
+
+    # Port-Mapping: Host:Container
+    # Adminer Web-UI auf Port 8081 (8080 ist bereits vom Web-Service belegt)
+    ports:
+      - "8081:8080"
+
+    # Netzwerk-Zuordnung für Container-zu-Container-Kommunikation
+    networks:
+      - app_network
+
+    # Abhängigkeit: Adminer startet erst, wenn DB bereit ist
+    depends_on:
+      db:
+        condition: service_healthy
+
+    # Health Check: Überprüft, ob die Web-UI erreichbar ist
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 # =============================================================================
 # NETZWERKE (Networks)
 # =============================================================================
@@ -200,5 +237,4 @@ volumes:
 # Beispiele für weitere Dienste:
 # - redis: Cache-Server
 # - nginx: Reverse Proxy / Load Balancer
-# - adminer: Datenbank-Verwaltung
 # =============================================================================
