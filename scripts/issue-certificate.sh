@@ -27,7 +27,7 @@ ACME_BIN="${ACME_HOME}/acme.sh"
 CERT_DIR="/etc/mosquitto/certs"
 CERT_FILE="${CERT_DIR}/${DOMAIN}.crt"
 KEY_FILE="${CERT_DIR}/${DOMAIN}.key"
-DNS_API="dns_hetznercloud"
+DNS_API="dns_hetzner"
 CA_SERVER="letsencrypt"
 
 # Colors for output
@@ -97,7 +97,7 @@ check_acme_installed() {
     log_info "acme.sh found at: ${ACME_BIN}"
 }
 
-# Check if Hetzner Cloud DNS token is configured
+# Check if Hetzner DNS token is configured
 check_dns_credentials() {
     local account_conf="${ACME_HOME}/account.conf"
 
@@ -106,25 +106,37 @@ check_dns_credentials() {
         exit 1
     fi
 
-    # Check for SAVED_HETZNER_TOKEN (used by dns_hetznercloud)
-    if grep -q "SAVED_HETZNER_TOKEN" "${account_conf}"; then
-        log_info "Hetzner Cloud DNS API token configured (dns_hetznercloud)"
+    # Check for SAVED_HETZNER_Token (used by dns_hetzner - DNS Console API)
+    if grep -q "SAVED_HETZNER_Token" "${account_conf}"; then
+        log_info "Hetzner DNS Console API token configured (dns_hetzner)"
         return 0
     fi
 
-    # Check for environment variable
+    # Check for SAVED_HETZNER_TOKEN (alternative uppercase format)
+    if grep -q "SAVED_HETZNER_TOKEN" "${account_conf}"; then
+        log_info "Hetzner DNS API token configured (uppercase format)"
+        return 0
+    fi
+
+    # Check for environment variable (HETZNER_Token for dns_hetzner)
+    if [[ -n "${HETZNER_Token:-}" ]]; then
+        log_info "HETZNER_Token found in environment (will be saved on first use)"
+        return 0
+    fi
+
+    # Also check uppercase version
     if [[ -n "${HETZNER_TOKEN:-}" ]]; then
         log_info "HETZNER_TOKEN found in environment (will be saved on first use)"
         return 0
     fi
 
-    log_error "Hetzner Cloud DNS token not configured"
+    log_error "Hetzner DNS token not configured"
     log_error ""
     log_error "To configure, either:"
-    log_error "  1. Export HETZNER_TOKEN environment variable before running this script"
-    log_error "  2. Add SAVED_HETZNER_TOKEN='your-token' to ${account_conf}"
+    log_error "  1. Export HETZNER_Token environment variable before running this script"
+    log_error "  2. Add SAVED_HETZNER_Token='your-token' to ${account_conf}"
     log_error ""
-    log_error "Get token from: https://console.hetzner.cloud/ -> Project -> API Tokens"
+    log_error "Get token from: https://dns.hetzner.com/ -> Settings -> API Tokens"
     exit 1
 }
 
