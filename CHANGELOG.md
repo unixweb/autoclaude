@@ -1,3 +1,24 @@
+## 2.7.4 - MQTT Service Integration
+
+### New Features
+
+- Added Eclipse Mosquitto MQTT broker service to Docker Compose configuration, enabling real-time message publishing and subscription capabilities for connected applications
+
+### Improvements
+
+- Integrated Mosquitto with existing directory structure for persistent configuration, data storage, and logging
+- Enhanced Docker Compose setup to support IoT and real-time messaging workflows
+
+---
+
+## What's Changed
+
+- feat: Add Eclipse Mosquitto MQTT broker service by @auto-claude in 006-add-mosquitto-mqtt-broker-service
+
+## Thanks to all contributors
+
+@auto-claude
+
 ## [2.1.0] - 2025-12-23
 
 ### Added
