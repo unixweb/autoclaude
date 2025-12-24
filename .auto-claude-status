@@ -1,17 +1,17 @@
 {
   "active": true,
-  "spec": "004-add-adminer-database-admin-service",
-  "state": "complete",
+  "spec": "009-set-up-automated-ssl-tls-certificate-management",
+  "state": "building",
   "subtasks": {
-    "completed": 0,
-    "total": 0,
+    "completed": 5,
+    "total": 25,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Implementation",
+    "current": "Certificate Issuance",
     "id": null,
-    "total": 3
+    "total": 4
   },
   "workers": {
     "active": 0,
@@ -19,7 +19,7 @@
   },
   "session": {
     "number": 3,
-    "started_at": "2025-12-23T22:41:14.809145"
+    "started_at": "2025-12-24T23:15:11.913329"
   },
-  "last_update": "2025-12-23T22:47:43.078634"
+  "last_update": "2025-12-24T23:23:44.255894"
 }
