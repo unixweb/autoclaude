@@ -15,6 +15,14 @@
 set -euo pipefail
 
 # Configuration
+ACME_HOME="${HOME}/.acme.sh"
+
+# Load SSL domain from acme.sh account.conf
+if [[ -f "${ACME_HOME}/account.conf" ]]; then
+    source "${ACME_HOME}/account.conf"
+fi
+DOMAIN="${SSL_DOMAIN:-mqtt.unixweb.de}"  # Fallback if not set
+
 CERTS_DIR="/etc/mosquitto/certs"
 MOSQUITTO_USER="mosquitto"
 MOSQUITTO_GROUP="mosquitto"
@@ -142,8 +150,8 @@ main() {
     log_info "=== Setup Complete ==="
     log_info ""
     log_info "Certificate directory is ready for SSL/TLS certificates:"
-    log_info "  - Certificate: ${CERTS_DIR}/mqtt.unixweb.de.crt"
-    log_info "  - Private key: ${CERTS_DIR}/mqtt.unixweb.de.key"
+    log_info "  - Certificate: ${CERTS_DIR}/${DOMAIN}.crt"
+    log_info "  - Private key: ${CERTS_DIR}/${DOMAIN}.key"
     log_info ""
     log_info "Next steps:"
     log_info "  1. Issue certificate with acme.sh"

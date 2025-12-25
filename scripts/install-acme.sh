@@ -129,8 +129,10 @@ main() {
     log_info "=== Installation Complete ==="
     log_info ""
     log_info "Next steps:"
-    log_info "  1. Configure Hetzner DNS API token in ~/.acme.sh/account.conf"
-    log_info "  2. Issue certificate: acme.sh --issue --dns dns_hetzner -d mqtt.unixweb.de"
+    log_info "  1. Configure SSL domain and Hetzner DNS API token in ~/.acme.sh/account.conf:"
+    log_info "     SSL_DOMAIN='mqtt.unixweb.de'"
+    log_info "     SAVED_HETZNER_TOKEN='your-token-here'"
+    log_info "  2. Issue certificate: ./scripts/issue-certificate.sh --staging"
     log_info ""
 }
 

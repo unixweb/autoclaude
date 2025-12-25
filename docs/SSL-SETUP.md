@@ -26,7 +26,22 @@ sudo ./scripts/complete-ssl-setup.sh --production
 | DNS token configured | `grep HETZNER ~/.acme.sh/account.conf` | See [DNS Token Setup](#dns-token-setup) |
 | Certificate directory | `ls /etc/mosquitto/certs/` | `sudo ./scripts/setup-mosquitto-certs.sh` |
 
-## DNS Token Setup
+## Configuration
+
+### SSL Domain Setup
+
+The SSL domain is configured centrally in `~/.acme.sh/account.conf`:
+
+```bash
+# Set your SSL domain (default: mqtt.unixweb.de)
+echo "SSL_DOMAIN='mqtt.unixweb.de'" >> ~/.acme.sh/account.conf
+```
+
+**IMPORTANT**: If you change the SSL_DOMAIN, you must also update the certificate paths in `mosquitto/config/mosquitto.conf` to match your domain.
+
+All scripts automatically read this configuration, so you only need to change it in one place.
+
+### DNS Token Setup
 
 **IMPORTANT**: The DNS token must come from the correct Hetzner account.
 
@@ -34,7 +49,7 @@ Hetzner has **two separate services**:
 - **Hetzner Cloud** (console.hetzner.cloud) - for servers, volumes, etc.
 - **Hetzner DNS Console** (dns.hetzner.com) - for DNS zones
 
-You need a token from **Hetzner DNS Console** (dns.hetzner.com), and it must be from the account that manages the `unixweb.de` DNS zone.
+You need a token from **Hetzner DNS Console** (dns.hetzner.com), and it must be from the account that manages your DNS zone.
 
 ### Getting the Correct Token
 
@@ -56,15 +71,18 @@ curl -H "Auth-API-Token: YOUR_TOKEN" https://dns.hetzner.com/api/v1/zones
 
 A valid token should return a JSON response with `"zones":[...]` containing the `unixweb.de` zone.
 
-### Updating the Token
+### Updating the Configuration
 
 ```bash
 # Edit account.conf
 nano ~/.acme.sh/account.conf
 
-# Find and update this line:
+# Update these lines:
+SSL_DOMAIN='your-domain.example.com'
 SAVED_HETZNER_Token='YOUR_NEW_TOKEN_HERE'
 ```
+
+**Note**: After changing SSL_DOMAIN, update the certificate paths in `mosquitto/config/mosquitto.conf`.
 
 ## Certificate Management
 
@@ -95,8 +113,9 @@ sudo ./scripts/complete-ssl-setup.sh --production
 # Install existing certificate to Mosquitto
 sudo ./scripts/install-certificate.sh
 
-# Force renewal
-~/.acme.sh/acme.sh --renew -d mqtt.unixweb.de --force
+# Force renewal (reads SSL_DOMAIN from config)
+SSL_DOMAIN=$(grep "^SSL_DOMAIN=" ~/.acme.sh/account.conf | cut -d"'" -f2)
+~/.acme.sh/acme.sh --renew -d "${SSL_DOMAIN:-mqtt.unixweb.de}" --force
 ```
 
 ## File Locations

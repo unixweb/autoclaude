@@ -25,16 +25,21 @@
 set -euo pipefail
 
 # Configuration
-DOMAIN="mqtt.unixweb.de"
+# Detect original user when running with sudo
+ORIGINAL_USER="${SUDO_USER:-$USER}"
+ACME_HOME="/home/${ORIGINAL_USER}/.acme.sh"
+
+# Load SSL domain from acme.sh account.conf
+if [[ -f "${ACME_HOME}/account.conf" ]]; then
+    source "${ACME_HOME}/account.conf"
+fi
+DOMAIN="${SSL_DOMAIN:-mqtt.unixweb.de}"  # Fallback if not set
+
 CERT_DIR="/etc/mosquitto/certs"
 CERT_FILE="${CERT_DIR}/${DOMAIN}.crt"
 KEY_FILE="${CERT_DIR}/${DOMAIN}.key"
 MOSQUITTO_USER="mosquitto"
 MOSQUITTO_GROUP="mosquitto"
-
-# Detect original user when running with sudo
-ORIGINAL_USER="${SUDO_USER:-$USER}"
-ACME_HOME="/home/${ORIGINAL_USER}/.acme.sh"
 ACME_BIN="${ACME_HOME}/acme.sh"
 
 # Colors

@@ -16,7 +16,13 @@
 set -euo pipefail
 
 # Configuration
-DOMAIN="mqtt.unixweb.de"
+ACME_HOME="${HOME}/.acme.sh"
+
+# Load SSL domain from acme.sh account.conf
+if [[ -f "${ACME_HOME}/account.conf" ]]; then
+    source "${ACME_HOME}/account.conf"
+fi
+DOMAIN="${SSL_DOMAIN:-mqtt.unixweb.de}"  # Fallback if not set
 CERT_DIR="/etc/mosquitto/certs"
 CERT_FILE="${CERT_DIR}/${DOMAIN}.crt"
 KEY_FILE="${CERT_DIR}/${DOMAIN}.key"

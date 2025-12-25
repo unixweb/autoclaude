@@ -27,9 +27,14 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-DOMAIN="mqtt.unixweb.de"
-ROOT_DOMAIN="unixweb.de"
 ACME_HOME="${HOME}/.acme.sh"
+
+# Load SSL domain from acme.sh account.conf
+if [[ -f "${ACME_HOME}/account.conf" ]]; then
+    source "${ACME_HOME}/account.conf"
+fi
+DOMAIN="${SSL_DOMAIN:-mqtt.unixweb.de}"  # Fallback if not set
+ROOT_DOMAIN="${DOMAIN#*.}"  # Extract root domain (e.g., unixweb.de from mqtt.unixweb.de)
 ACCOUNT_CONF="${ACME_HOME}/account.conf"
 
 # APIs to check

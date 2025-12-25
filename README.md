@@ -119,7 +119,20 @@ docker compose logs -f
 
 ## 🔐 MQTT Broker Setup
 
-### Schritt 1: Hetzner Cloud DNS Token einrichten
+### Schritt 1: SSL Domain und Hetzner Cloud DNS Token einrichten
+
+**SSL Domain konfigurieren:**
+
+Die Domain für SSL-Zertifikate wird zentral in `~/.acme.sh/account.conf` konfiguriert:
+
+```bash
+# SSL Domain setzen (Standard: mqtt.unixweb.de)
+echo "SSL_DOMAIN='mqtt.unixweb.de'" >> ~/.acme.sh/account.conf
+```
+
+**WICHTIG:** Wenn Sie eine andere Domain verwenden, müssen Sie auch die Zertifikatspfade in `mosquitto/config/mosquitto.conf` entsprechend anpassen.
+
+**Hetzner Cloud DNS Token einrichten:**
 
 1. Anmelden bei [Hetzner Cloud Console](https://console.hetzner.cloud/)
 2. Navigieren zu: **Security → API Tokens → Generate API Token**
@@ -255,10 +268,11 @@ Installiert acme.sh Zertifikate für Mosquitto Docker Container.
 ```
 
 **Was das Script tut:**
-1. Kopiert Zertifikate von `~/.acme.sh/mqtt.unixweb.de_ecc/` nach `mosquitto/certs/`
-2. Setzt Berechtigungen auf 644 (lesbar für Container-User 1883)
-3. Konfiguriert acme.sh Reload-Hook für automatische Updates
-4. Verifiziert die Installation
+1. Liest SSL_DOMAIN aus `~/.acme.sh/account.conf` (Standard: mqtt.unixweb.de)
+2. Kopiert Zertifikate von `~/.acme.sh/${SSL_DOMAIN}_ecc/` nach `mosquitto/certs/`
+3. Setzt Berechtigungen auf 644 (lesbar für Container-User 1883)
+4. Konfiguriert acme.sh Reload-Hook für automatische Updates
+5. Verifiziert die Installation
 
 #### `fetch-zones.sh`
 Listet alle DNS-Zones aus Hetzner Cloud auf.
@@ -332,8 +346,11 @@ Zertifikat läuft ab:    │ ← Tag 90
 ### Manuelle Erneuerung (falls erforderlich)
 
 ```bash
+# SSL Domain aus config lesen
+SSL_DOMAIN=$(grep "^SSL_DOMAIN=" ~/.acme.sh/account.conf | cut -d"'" -f2)
+
 # Zertifikat manuell erneuern
-~/.acme.sh/acme.sh --renew -d mqtt.unixweb.de --ecc --force
+~/.acme.sh/acme.sh --renew -d "${SSL_DOMAIN:-mqtt.unixweb.de}" --ecc --force
 
 # Container neu starten (erfolgt automatisch)
 docker compose restart mosquitto
@@ -342,11 +359,14 @@ docker compose restart mosquitto
 ### Status der Erneuerung prüfen
 
 ```bash
+# SSL Domain aus config lesen
+SSL_DOMAIN=$(grep "^SSL_DOMAIN=" ~/.acme.sh/account.conf | cut -d"'" -f2)
+
 # Nächster Erneuerungszeitpunkt
-~/.acme.sh/acme.sh --info -d mqtt.unixweb.de | grep NextRenew
+~/.acme.sh/acme.sh --info -d "${SSL_DOMAIN:-mqtt.unixweb.de}" | grep NextRenew
 
 # Zertifikats-Ablaufdatum
-openssl x509 -in mosquitto/certs/mqtt.unixweb.de.crt -noout -enddate
+openssl x509 -in mosquitto/certs/${SSL_DOMAIN:-mqtt.unixweb.de}.crt -noout -enddate
 
 # Cron-Job überprüfen
 crontab -l | grep acme
