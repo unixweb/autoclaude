@@ -6,3 +6,6 @@
 # Environment variables - contains sensitive credentials
 # Note: .env.example is intentionally NOT ignored (template for setup)
 .env
+
+# API tokens and access files - NEVER commit these
+access.txt
