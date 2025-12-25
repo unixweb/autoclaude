@@ -124,6 +124,10 @@ echo ""
 
 # Check 2: Test Hetzner DNS Console API (dns_hetzner)
 log_step "Testing Hetzner DNS Console API (dns.hetzner.com)..."
+# API: Hetzner DNS Console (https://dns.hetzner.com/api/v1)
+# Auth: "Auth-API-Token" header (NOT Bearer token)
+# Docs: https://dns.hetzner.com/api-docs
+# Used by: acme.sh dns_hetzner plugin
 DNS_CONSOLE_RESPONSE=$(curl -s -H "Auth-API-Token: ${TOKEN}" "${HETZNER_DNS_API}/zones" 2>&1)
 
 if echo "${DNS_CONSOLE_RESPONSE}" | grep -q '"zones":\[\]'; then
@@ -157,6 +161,10 @@ echo ""
 
 # Check 3: Test Hetzner Cloud DNS API (dns_hetznercloud)
 log_step "Testing Hetzner Cloud DNS API (api.hetzner.cloud)..."
+# API: Hetzner Cloud API (https://api.hetzner.cloud/v1)
+# Auth: "Authorization: Bearer" header (NOT Auth-API-Token)
+# Docs: https://docs.hetzner.cloud/reference/cloud
+# Used by: acme.sh dns_hetznercloud plugin
 CLOUD_RESPONSE=$(curl -s -H "Authorization: Bearer ${TOKEN}" "${HETZNER_CLOUD_API}/primary_ips" 2>&1)
 
 if echo "${CLOUD_RESPONSE}" | grep -q '"error"'; then
@@ -177,6 +185,9 @@ elif echo "${CLOUD_RESPONSE}" | grep -q '"primary_ips"'; then
     log_info "Cloud API: Token is valid for Hetzner Cloud"
 
     # Check for DNS zones in Cloud API
+    # Note: Even when using a Cloud API token, DNS zone management uses the DNS Console API
+    # API: Hetzner DNS Console (https://dns.hetzner.com/api/v1)
+    # Auth: "Auth-API-Token" header - Cloud tokens may also work with DNS Console API
     CLOUD_DNS_RESPONSE=$(curl -s -H "Auth-API-Token: ${TOKEN}" "https://dns.hetzner.com/api/v1/zones" 2>&1)
     if echo "${CLOUD_DNS_RESPONSE}" | grep -q "\"name\":\"${ROOT_DOMAIN}\""; then
         log_info "Zone '${ROOT_DOMAIN}' accessible via Cloud API - use dns_hetznercloud"
