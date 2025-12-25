@@ -177,7 +177,7 @@ elif echo "${CLOUD_RESPONSE}" | grep -q '"primary_ips"'; then
     log_info "Cloud API: Token is valid for Hetzner Cloud"
 
     # Check for DNS zones in Cloud API
-    CLOUD_DNS_RESPONSE=$(curl -s -H "Authorization: Bearer ${TOKEN}" "https://dns.hetzner.com/api/v1/zones" 2>&1)
+    CLOUD_DNS_RESPONSE=$(curl -s -H "Auth-API-Token: ${TOKEN}" "https://dns.hetzner.com/api/v1/zones" 2>&1)
     if echo "${CLOUD_DNS_RESPONSE}" | grep -q "\"name\":\"${ROOT_DOMAIN}\""; then
         log_info "Zone '${ROOT_DOMAIN}' accessible via Cloud API - use dns_hetznercloud"
     fi
