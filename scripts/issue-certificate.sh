@@ -27,7 +27,7 @@ ACME_BIN="${ACME_HOME}/acme.sh"
 CERT_DIR="/etc/mosquitto/certs"
 CERT_FILE="${CERT_DIR}/${DOMAIN}.crt"
 KEY_FILE="${CERT_DIR}/${DOMAIN}.key"
-DNS_API="dns_hetzner"
+DNS_API="dns_hetznercloud"
 CA_SERVER="letsencrypt"
 
 # Colors for output
@@ -106,37 +106,25 @@ check_dns_credentials() {
         exit 1
     fi
 
-    # Check for SAVED_HETZNER_Token (used by dns_hetzner - DNS Console API)
-    if grep -q "SAVED_HETZNER_Token" "${account_conf}"; then
-        log_info "Hetzner DNS Console API token configured (dns_hetzner)"
-        return 0
-    fi
-
-    # Check for SAVED_HETZNER_TOKEN (alternative uppercase format)
+    # Check for SAVED_HETZNER_TOKEN (used by dns_hetznercloud - Hetzner Cloud API)
     if grep -q "SAVED_HETZNER_TOKEN" "${account_conf}"; then
-        log_info "Hetzner DNS API token configured (uppercase format)"
+        log_info "Hetzner Cloud API token configured (dns_hetznercloud)"
         return 0
     fi
 
-    # Check for environment variable (HETZNER_Token for dns_hetzner)
-    if [[ -n "${HETZNER_Token:-}" ]]; then
-        log_info "HETZNER_Token found in environment (will be saved on first use)"
-        return 0
-    fi
-
-    # Also check uppercase version
+    # Check for environment variable
     if [[ -n "${HETZNER_TOKEN:-}" ]]; then
         log_info "HETZNER_TOKEN found in environment (will be saved on first use)"
         return 0
     fi
 
-    log_error "Hetzner DNS token not configured"
+    log_error "Hetzner Cloud DNS token not configured"
     log_error ""
     log_error "To configure, either:"
-    log_error "  1. Export HETZNER_Token environment variable before running this script"
-    log_error "  2. Add SAVED_HETZNER_Token='your-token' to ${account_conf}"
+    log_error "  1. Export HETZNER_TOKEN environment variable before running this script"
+    log_error "  2. Add SAVED_HETZNER_TOKEN='your-token' to ${account_conf}"
     log_error ""
-    log_error "Get token from: https://dns.hetzner.com/ -> Settings -> API Tokens"
+    log_error "Get token from: https://console.hetzner.cloud/ -> Security -> API Tokens"
     exit 1
 }
 

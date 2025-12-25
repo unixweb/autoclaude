@@ -95,29 +95,30 @@ check_prerequisites() {
     fi
 
     # Check DNS token
-    if grep -q "SAVED_HETZNER_Token" "${ACME_HOME}/account.conf" 2>/dev/null; then
-        log_info "Hetzner DNS token is configured"
+    if grep -q "SAVED_HETZNER_TOKEN" "${ACME_HOME}/account.conf" 2>/dev/null; then
+        log_info "Hetzner Cloud DNS token is configured"
 
         # Test the token
-        log_info "Testing DNS API access..."
+        log_info "Testing Cloud DNS API access..."
         local token
-        token=$(grep "SAVED_HETZNER_Token" "${ACME_HOME}/account.conf" 2>/dev/null | cut -d"'" -f2 || true)
+        token=$(grep "SAVED_HETZNER_TOKEN" "${ACME_HOME}/account.conf" 2>/dev/null | cut -d"'" -f2 || true)
 
         if [[ -n "${token}" ]]; then
             local response
-            response=$(curl -s -H "Auth-API-Token: ${token}" "https://dns.hetzner.com/api/v1/zones" 2>/dev/null || echo '{"error":"curl failed"}')
+            response=$(curl -s -H "Authorization: Bearer ${token}" "https://api.hetzner.cloud/v1/zones" 2>/dev/null || echo '{"error":"curl failed"}')
 
             if echo "${response}" | grep -q '"zones":\[\]'; then
                 log_warn "DNS token is valid but has NO zones accessible"
                 log_warn "This token cannot manage the ${DOMAIN} zone"
                 log_error ""
-                log_error "IMPORTANT: You need a token from the Hetzner DNS Console account"
-                log_error "that manages the unixweb.de domain zone."
+                log_error "IMPORTANT: You need a token from the Hetzner Cloud Console"
+                log_error "that has access to the unixweb.de DNS zone."
                 log_error ""
-                log_error "1. Log into: https://dns.hetzner.com/"
-                log_error "2. Navigate to: Settings -> API Tokens -> Create"
-                log_error "3. Update token in: ${ACME_HOME}/account.conf"
-                log_error "   SAVED_HETZNER_Token='YOUR_NEW_TOKEN'"
+                log_error "1. Log into: https://console.hetzner.cloud/"
+                log_error "2. Navigate to: Security -> API Tokens -> Generate API Token"
+                log_error "3. Make sure token has Read & Write permissions"
+                log_error "4. Update token in: ${ACME_HOME}/account.conf"
+                log_error "   SAVED_HETZNER_TOKEN='YOUR_NEW_TOKEN'"
                 log_error ""
                 errors=1
             elif echo "${response}" | grep -q "unixweb.de"; then
@@ -127,9 +128,9 @@ check_prerequisites() {
             fi
         fi
     else
-        log_error "Hetzner DNS token is NOT configured"
+        log_error "Hetzner Cloud DNS token is NOT configured"
         log_error "Add to ${ACME_HOME}/account.conf:"
-        log_error "  SAVED_HETZNER_Token='your-token-from-dns.hetzner.com'"
+        log_error "  SAVED_HETZNER_TOKEN='your-token-from-console.hetzner.cloud'"
         errors=1
     fi
 
@@ -169,7 +170,7 @@ issue_certificate() {
 
     local acme_args=(
         "--issue"
-        "--dns" "dns_hetzner"
+        "--dns" "dns_hetznercloud"
         "-d" "${DOMAIN}"
         "--server" "letsencrypt"
     )
@@ -183,7 +184,7 @@ issue_certificate() {
     fi
 
     log_info "Issuing certificate for: ${DOMAIN}"
-    log_info "DNS API: dns_hetzner (Hetzner DNS Console)"
+    log_info "DNS API: dns_hetznercloud (Hetzner Cloud DNS)"
     log_info ""
 
     # Run as original user (acme.sh stores certs in user's home)

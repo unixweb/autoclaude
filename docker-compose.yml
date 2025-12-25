@@ -11,8 +11,6 @@
 # Variablen mit Standardwerten: ${VAR:-default}
 # Variablen ohne Standard (Pflichtfelder): ${VAR}
 
-version: "3.8"
-
 # =============================================================================
 # DIENSTE (Services)
 # =============================================================================
@@ -195,6 +193,50 @@ services:
       retries: 3
       start_period: 10s
 
+  # ---------------------------------------------------------------------------
+  # MQTT Broker (Eclipse Mosquitto)
+  # ---------------------------------------------------------------------------
+  # Eclipse Mosquitto ist ein leichtgewichtiger MQTT-Broker für IoT und Messaging.
+  # Unterstützt MQTT und WebSocket mit TLS-Verschlüsselung.
+  mosquitto:
+    # Eclipse Mosquitto Docker Image
+    image: eclipse-mosquitto:latest
+
+    # Container-Name für einfachere Identifikation
+    container_name: app_mosquitto
+
+    # Neustart-Richtlinie bei Fehlern oder System-Neustart
+    restart: unless-stopped
+
+    # User-Mapping: Läuft als mosquitto user (UID 1883)
+    user: "1883:1883"
+
+    # Port-Mapping: Host:Container
+    ports:
+      - "${MQTT_PORT:-1883}:1883"       # MQTT unverschlüsselt
+      - "${MQTT_TLS_PORT:-8883}:8883"   # MQTT mit TLS
+      - "${MQTT_WS_PORT:-9001}:9001"    # WebSocket unverschlüsselt
+      - "${MQTT_WSS_PORT:-8084}:8084"   # WebSocket mit TLS
+
+    # Volumes: Konfiguration, Daten, Logs und Zertifikate
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - ./mosquitto/certs:/mosquitto/certs:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_logs:/mosquitto/log
+
+    # Netzwerk-Zuordnung für Container-zu-Container-Kommunikation
+    networks:
+      - app_network
+
+    # Health Check: Überprüft ob der Broker erreichbar ist
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -i healthcheck -W 3 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 # =============================================================================
 # NETZWERKE (Networks)
 # =============================================================================
@@ -223,6 +265,14 @@ volumes:
 
   # Web-Server Logs
   web_logs:
+    driver: local
+
+  # Mosquitto persistent data
+  mosquitto_data:
+    driver: local
+
+  # Mosquitto logs
+  mosquitto_logs:
     driver: local
 
 # =============================================================================

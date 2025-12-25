@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "009-set-up-automated-ssl-tls-certificate-management",
+  "spec": "012-fix-broken-shell-scripts-api-integration",
   "state": "building",
   "subtasks": {
-    "completed": 5,
-    "total": 25,
+    "completed": 4,
+    "total": 5,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Certificate Issuance",
+    "current": "Validation",
     "id": null,
-    "total": 4
+    "total": 2
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 3,
-    "started_at": "2025-12-24T23:15:11.913329"
+    "number": 5,
+    "started_at": "2025-12-25T12:35:10.326399"
   },
-  "last_update": "2025-12-24T23:23:44.255894"
+  "last_update": "2025-12-25T12:41:25.538051"
 }

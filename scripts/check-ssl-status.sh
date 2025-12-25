@@ -110,27 +110,27 @@ fi
 echo -e "\n${BOLD}2. DNS TOKEN${NC}\n"
 
 if [[ -f "${ACME_HOME}/account.conf" ]]; then
-    if grep -q "SAVED_HETZNER_Token" "${ACME_HOME}/account.conf" 2>/dev/null; then
+    if grep -q "SAVED_HETZNER_TOKEN" "${ACME_HOME}/account.conf" 2>/dev/null; then
         # Extract and test token
-        token=$(grep "SAVED_HETZNER_Token" "${ACME_HOME}/account.conf" 2>/dev/null | head -1 | cut -d"'" -f2 || true)
+        token=$(grep "SAVED_HETZNER_TOKEN" "${ACME_HOME}/account.conf" 2>/dev/null | head -1 | cut -d"'" -f2 || true)
 
         if [[ -n "${token}" && "${#token}" -gt 10 ]]; then
             check_status "DNS Token" "ok" "Configured in account.conf"
 
             # Test token access
-            echo -e "\n  Testing DNS API access..."
-            response=$(curl -s -H "Auth-API-Token: ${token}" "https://dns.hetzner.com/api/v1/zones" 2>/dev/null || echo '{"error":"connection failed"}')
+            echo -e "\n  Testing Cloud DNS API access..."
+            response=$(curl -s -H "Authorization: Bearer ${token}" "https://api.hetzner.cloud/v1/zones" 2>/dev/null || echo '{"error":"connection failed"}')
 
             if echo "${response}" | grep -q '"zones":\[\]'; then
-                check_status "Zone Access" "blocked" "Token has ZERO zones accessible" "→ Get token from correct Hetzner DNS account (see instructions below)"
+                check_status "Zone Access" "blocked" "Token has ZERO zones accessible" "→ Get token from correct Hetzner Cloud account (see instructions below)"
             elif echo "${response}" | grep -q "unixweb.de"; then
                 check_status "Zone Access" "ok" "Token has access to unixweb.de zone"
             elif echo "${response}" | grep -q '"zones":\['; then
                 # Has zones but not unixweb.de
                 zones=$(echo "${response}" | grep -o '"name":"[^"]*"' | head -3 | tr '\n' ' ')
                 check_status "Zone Access" "blocked" "Token does NOT have access to unixweb.de" "→ Found zones: ${zones}"
-            elif echo "${response}" | grep -q "Invalid authentication"; then
-                check_status "Zone Access" "blocked" "Token is INVALID" "→ Generate new token at dns.hetzner.com"
+            elif echo "${response}" | grep -q '"error"'; then
+                check_status "Zone Access" "blocked" "Token is INVALID" "→ Generate new token at console.hetzner.cloud"
             else
                 check_status "Zone Access" "warn" "Could not verify (network issue?)"
             fi
@@ -138,7 +138,7 @@ if [[ -f "${ACME_HOME}/account.conf" ]]; then
             check_status "DNS Token" "fail" "Token appears empty or invalid"
         fi
     else
-        check_status "DNS Token" "fail" "Not configured" "Add SAVED_HETZNER_Token to ${ACME_HOME}/account.conf"
+        check_status "DNS Token" "fail" "Not configured" "Add SAVED_HETZNER_TOKEN to ${ACME_HOME}/account.conf"
     fi
 else
     check_status "account.conf" "fail" "File not found" "${ACME_HOME}/account.conf"
@@ -239,18 +239,19 @@ echo -e "  Checks passed: ${PASSED_CHECKS}/${TOTAL_CHECKS}\n"
 
 if [[ ${BLOCKED} -eq 1 ]]; then
     echo -e "${RED}${BOLD}⚠ BLOCKER DETECTED: DNS Token Issue${NC}\n"
-    echo -e "The Hetzner DNS API token doesn't have access to the unixweb.de zone."
+    echo -e "The Hetzner Cloud API token doesn't have access to the unixweb.de zone."
     echo -e "This is the PRIMARY blocker preventing certificate issuance.\n"
     echo -e "${BOLD}To fix:${NC}"
-    echo -e "  1. Log into ${CYAN}https://dns.hetzner.com/${NC}"
-    echo -e "     (Use the account that OWNS the unixweb.de zone)"
+    echo -e "  1. Log into ${CYAN}https://console.hetzner.cloud/${NC}"
+    echo -e "     (Use the project that OWNS the unixweb.de zone)"
     echo -e ""
-    echo -e "  2. Navigate to: Settings → API Tokens → Create API Token"
+    echo -e "  2. Navigate to: Security → API Tokens → Generate API Token"
     echo -e "     Give it a name like 'acme.sh-mqtt'"
+    echo -e "     Make sure it has Read & Write permissions"
     echo -e ""
     echo -e "  3. Copy the token and update acme.sh config:"
     echo -e "     ${CYAN}nano ${ACME_HOME}/account.conf${NC}"
-    echo -e "     Change: SAVED_HETZNER_Token='YOUR_NEW_TOKEN'"
+    echo -e "     Change: SAVED_HETZNER_TOKEN='YOUR_NEW_TOKEN'"
     echo -e ""
     echo -e "  4. Verify with: ${CYAN}./scripts/test-dns-token.sh YOUR_NEW_TOKEN${NC}"
     echo -e ""

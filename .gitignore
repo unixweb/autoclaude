@@ -9,3 +9,7 @@
 
 # API tokens and access files - NEVER commit these
 access.txt
+# Ignore SSL certificates and private keys
+mosquitto/certs/*.crt
+mosquitto/certs/*.key
+mosquitto/certs/*.pem
