@@ -59,7 +59,7 @@ Der MQTT Broker unterstützt folgende Protokolle und Ports:
 ### SSL/TLS Management
 
 **Automatisierte Zertifikatsverwaltung:**
-- 🔐 Let's Encrypt Zertifikate für mqtt.unixweb.de
+- 🔐 Let's Encrypt Zertifikate für alle Domains
 - 🔄 Automatische Erneuerung alle 60 Tage
 - 🛡️ TLS 1.2 Verschlüsselung
 - 📦 Integration mit acme.sh
