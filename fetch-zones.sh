@@ -8,8 +8,8 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOKEN_FILE="${SCRIPT_DIR}/access.txt"
-API_ENDPOINT="https://dns.hetzner.com/api/v1/zones"
-# Note: Hetzner DNS API uses dns.hetzner.com with Auth-API-Token header
+API_ENDPOINT="https://api.hetzner.cloud/v1/zones"
+# Note: Hetzner Cloud API uses api.hetzner.cloud with Bearer token authorization
 
 # Check if token file exists
 if [[ ! -f "${TOKEN_FILE}" ]]; then
@@ -28,4 +28,4 @@ if [[ -z "${TOKEN}" ]]; then
 fi
 
 # Execute API call
-curl -s -H "Auth-API-Token: ${TOKEN}" "${API_ENDPOINT}"
+curl -s -H "Authorization: Bearer ${TOKEN}" "${API_ENDPOINT}"
