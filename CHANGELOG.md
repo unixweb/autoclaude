@@ -1,3 +1,26 @@
+## 2.7.5 - Automated Certificate Management
+
+### New Features
+
+- Automated SSL/TLS certificate management for MQTT broker using Let's Encrypt and acme.sh
+- DNS-01 challenge validation via Hetzner Cloud DNS API
+- Automatic certificate renewal every 90 days
+
+### Improvements
+
+- Enhanced security infrastructure for continuous secure MQTT connectivity
+- Streamlined certificate lifecycle management for mqtt.unixweb.de domain
+
+---
+
+## What's Changed
+
+- feature: Implement automated SSL/TLS certificate management for Mosquitto MQTT broker by @auto-claude in auto-claude-spec-009
+
+## Thanks to all contributors
+
+@auto-claude
+
 ## 2.7.4 - MQTT Service Integration
 
 ### New Features
