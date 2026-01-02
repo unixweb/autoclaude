@@ -38,4 +38,23 @@ def api_root():
             "topics": "/api/topics",
             "messages": "/api/messages",
         },
+        "websocket": {
+            "endpoint": "/socket.io/",
+            "events": {
+                "connect": "Fired on connection, returns available channels",
+                "disconnect": "Fired on disconnection",
+                "subscribe": "Subscribe to metric channels",
+                "unsubscribe": "Unsubscribe from metric channels",
+                "get_channels": "Request list of available channels",
+                "ping_broker": "Check broker connection status",
+            },
+            "channels": [
+                "broker_stats",
+                "broker_summary",
+                "clients",
+                "messages",
+                "bytes",
+                "load",
+            ],
+        },
     }

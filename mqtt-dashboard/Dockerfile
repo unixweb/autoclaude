@@ -30,7 +30,9 @@ FROM python:3.12-slim AS production
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    FLASK_ENV=production \
+    SOCKETIO_ASYNC_MODE=eventlet
 
 # Set working directory
 WORKDIR /app
@@ -55,13 +57,14 @@ COPY backend/ ./
 COPY --from=frontend-builder /app/frontend/dist ./static
 
 # Update Flask app to serve static files
-# Create a simple wrapper that serves static files
+# Create a simple wrapper that serves static files with Flask-SocketIO support
 RUN cat > /app/wsgi.py << 'EOF'
 """
 WSGI entry point for the MQTT Dashboard.
 
 This module configures the Flask application to serve the Vue.js frontend
-static files and provides the WSGI application instance for Gunicorn.
+static files, initializes Flask-SocketIO for WebSocket support, and provides
+the WSGI application instance for Gunicorn.
 """
 
 import os
@@ -70,6 +73,8 @@ from flask import send_from_directory, send_file
 from app import create_app
 from app.config import get_config
 from app.mqtt_client import init_mqtt_client
+from app.services.sys_monitor import init_sys_monitor
+from app.websocket import init_socketio, start_background_stats_pusher
 
 
 def create_production_app():
@@ -82,6 +87,17 @@ def create_production_app():
     # Initialize MQTT client
     mqtt_client = init_mqtt_client(config)
     app.mqtt_client = mqtt_client
+
+    # Initialize SysMonitor for $SYS topic subscription
+    sys_monitor = init_sys_monitor(mqtt_client)
+    app.sys_monitor = sys_monitor
+
+    # Initialize Flask-SocketIO for WebSocket support
+    socketio = init_socketio(app)
+    app.socketio = socketio
+
+    # Start background stats pusher
+    start_background_stats_pusher()
 
     # Serve static files from Vue.js build
     static_folder = os.path.join(os.path.dirname(__file__), "static")
@@ -97,11 +113,11 @@ def create_production_app():
             return send_from_directory(static_folder, path)
         return send_file(os.path.join(static_folder, "index.html"))
 
-    return app
+    return app, socketio
 
 
-# Create the WSGI application instance
-application = create_production_app()
+# Create the WSGI application instance and SocketIO
+application, socketio = create_production_app()
 app = application  # Alias for gunicorn
 EOF
 
@@ -118,5 +134,7 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:5000/health || exit 1
 
-# Default command: run with Gunicorn for production
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]
+# Default command: run with Gunicorn + eventlet for WebSocket support
+# Use eventlet worker class for Flask-SocketIO compatibility
+# Single worker is required for WebSocket state management
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--worker-class", "eventlet", "--workers", "1", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]

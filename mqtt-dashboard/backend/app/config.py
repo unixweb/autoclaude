@@ -32,7 +32,8 @@ class Config:
     CORS_ORIGINS: str = os.environ.get("CORS_ORIGINS", "*")
 
     # SocketIO settings
-    SOCKETIO_ASYNC_MODE: str = os.environ.get("SOCKETIO_ASYNC_MODE", "eventlet")
+    # Use 'threading' for development, 'eventlet' for production with gunicorn
+    SOCKETIO_ASYNC_MODE: str = os.environ.get("SOCKETIO_ASYNC_MODE", "threading")
 
 
 class DevelopmentConfig(Config):

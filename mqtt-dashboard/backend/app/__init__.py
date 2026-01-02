@@ -39,9 +39,13 @@ def create_app(config_name: str = "development") -> Flask:
     def health_check():
         """Health check endpoint for Docker and monitoring."""
         from app.mqtt_client import get_mqtt_client
+        from app.websocket import get_socketio, get_connected_client_count
 
         mqtt_client = get_mqtt_client()
         mqtt_status = "connected" if mqtt_client and mqtt_client.is_connected else "disconnected"
+
+        socketio = get_socketio()
+        websocket_status = "initialized" if socketio else "not_initialized"
 
         return {
             "status": "healthy",
@@ -50,6 +54,10 @@ def create_app(config_name: str = "development") -> Flask:
                 "host": config.MQTT_BROKER_HOST,
                 "port": config.MQTT_BROKER_PORT,
                 "status": mqtt_status,
+            },
+            "websocket": {
+                "status": websocket_status,
+                "connected_clients": get_connected_client_count() if socketio else 0,
             },
         }
 
