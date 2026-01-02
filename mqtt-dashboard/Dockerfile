@@ -74,6 +74,7 @@ from app import create_app
 from app.config import get_config
 from app.mqtt_client import init_mqtt_client
 from app.services.sys_monitor import init_sys_monitor
+from app.services.topic_tracker import init_topic_tracker
 from app.websocket import init_socketio, start_background_stats_pusher
 
 
@@ -91,6 +92,10 @@ def create_production_app():
     # Initialize SysMonitor for $SYS topic subscription
     sys_monitor = init_sys_monitor(mqtt_client)
     app.sys_monitor = sys_monitor
+
+    # Initialize TopicTracker for topic discovery
+    topic_tracker = init_topic_tracker(mqtt_client)
+    app.topic_tracker = topic_tracker
 
     # Initialize Flask-SocketIO for WebSocket support
     socketio = init_socketio(app)
