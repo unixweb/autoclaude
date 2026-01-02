@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import DashboardLayout from "../layouts/DashboardLayout.vue";
 import Overview from "../views/Overview.vue";
+import Clients from "../views/Clients.vue";
 
 // Placeholder component for routes that will be implemented later
 const PlaceholderView = {
@@ -30,7 +31,7 @@ const routes = [
       {
         path: "clients",
         name: "clients",
-        component: PlaceholderView,
+        component: Clients,
         meta: {
           title: "Connected Clients",
         },
