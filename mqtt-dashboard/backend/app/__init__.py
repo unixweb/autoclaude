@@ -7,6 +7,8 @@ This module initializes the Flask application for the MQTT broker management das
 from flask import Flask
 from flask_cors import CORS
 
+from app.config import get_config
+
 
 def create_app(config_name: str = "development") -> Flask:
     """
@@ -21,14 +23,11 @@ def create_app(config_name: str = "development") -> Flask:
     app = Flask(__name__)
 
     # Load configuration based on environment
-    app.config.from_mapping(
-        SECRET_KEY="dev-secret-key-change-in-production",
-        MQTT_BROKER_HOST="mosquitto",
-        MQTT_BROKER_PORT=1883,
-    )
+    config = get_config(config_name)
+    app.config.from_object(config)
 
     # Enable CORS for frontend development
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": config.CORS_ORIGINS}})
 
     # Register blueprints
     from app.routes import api_bp
@@ -39,6 +38,19 @@ def create_app(config_name: str = "development") -> Flask:
     @app.route("/health")
     def health_check():
         """Health check endpoint for Docker and monitoring."""
-        return {"status": "healthy", "service": "mqtt-dashboard"}
+        from app.mqtt_client import get_mqtt_client
+
+        mqtt_client = get_mqtt_client()
+        mqtt_status = "connected" if mqtt_client and mqtt_client.is_connected else "disconnected"
+
+        return {
+            "status": "healthy",
+            "service": "mqtt-dashboard",
+            "mqtt_broker": {
+                "host": config.MQTT_BROKER_HOST,
+                "port": config.MQTT_BROKER_PORT,
+                "status": mqtt_status,
+            },
+        }
 
     return app
