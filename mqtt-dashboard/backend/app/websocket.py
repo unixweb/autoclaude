@@ -40,6 +40,45 @@ _connected_clients: dict[str, dict] = {}
 _clients_lock = threading.Lock()
 
 
+def _forward_topic_message(
+    client_id: str,
+    topic: str,
+    payload: str,
+    timestamp: str,
+    subscription_topic: str,
+) -> None:
+    """
+    Forward an MQTT message to a specific WebSocket client.
+
+    This function is called by the SubscriptionManager when a message is received
+    on a subscribed topic.
+
+    Args:
+        client_id: WebSocket client ID (session ID).
+        topic: The actual MQTT topic the message was published to.
+        payload: The message payload.
+        timestamp: ISO 8601 timestamp when the message was received.
+        subscription_topic: The topic pattern the client subscribed to.
+    """
+    if socketio is None:
+        return
+
+    try:
+        # Emit the message to the specific client
+        socketio.emit(
+            "topic_message",
+            {
+                "topic": topic,
+                "payload": payload,
+                "timestamp": timestamp,
+                "subscription": subscription_topic,
+            },
+            room=client_id,
+        )
+    except Exception as e:
+        logger.error(f"Error forwarding topic message to client {client_id}: {e}")
+
+
 def init_socketio(app: Flask) -> SocketIO:
     """
     Initialize Flask-SocketIO with the Flask application.
@@ -66,6 +105,11 @@ def init_socketio(app: Flask) -> SocketIO:
     )
 
     _register_event_handlers(socketio)
+
+    # Set up message forwarding callback for subscription manager
+    from app.services.subscription_manager import get_subscription_manager
+    subscription_manager = get_subscription_manager()
+    subscription_manager.set_message_callback(_forward_topic_message)
 
     logger.info(f"Flask-SocketIO initialized with async_mode={async_mode}")
 
@@ -118,8 +162,13 @@ def _register_event_handlers(sio: SocketIO) -> None:
     def handle_disconnect():
         """Handle client disconnection."""
         from flask import request
+        from app.services.subscription_manager import get_subscription_manager
 
         client_id = request.sid
+
+        # Unsubscribe from all MQTT topics
+        subscription_manager = get_subscription_manager()
+        subscription_manager.unsubscribe_client_all(client_id)
 
         with _clients_lock:
             if client_id in _connected_clients:
@@ -231,6 +280,104 @@ def _register_event_handlers(sio: SocketIO) -> None:
             "sys_monitor_subscribed": sys_monitor.is_subscribed if sys_monitor else False,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         })
+
+    @sio.on("subscribe_topic")
+    def handle_subscribe_topic(data):
+        """
+        Handle client subscription to MQTT topics.
+
+        Args:
+            data: Dictionary with 'topic' or 'topics' key containing topic pattern(s).
+        """
+        from flask import request
+        from app.services.subscription_manager import get_subscription_manager
+
+        client_id = request.sid
+
+        if not isinstance(data, dict):
+            emit("error", {"message": "Invalid topic subscription data format"})
+            return
+
+        # Support both single topic and multiple topics
+        topics = data.get("topics", [])
+        if not topics:
+            topic = data.get("topic")
+            if topic:
+                topics = [topic]
+
+        if not isinstance(topics, list):
+            topics = [topics]
+
+        subscription_manager = get_subscription_manager()
+        subscribed = []
+        failed = []
+
+        for topic in topics:
+            if not isinstance(topic, str) or not topic:
+                failed.append({"topic": topic, "error": "Invalid topic format"})
+                continue
+
+            success = subscription_manager.subscribe_client(client_id, topic)
+            if success:
+                subscribed.append(topic)
+                logger.debug(f"Client {client_id} subscribed to MQTT topic: {topic}")
+            else:
+                failed.append({"topic": topic, "error": "Subscription failed"})
+
+        emit("topic_subscribed", {
+            "subscribed": subscribed,
+            "failed": failed,
+        })
+
+    @sio.on("unsubscribe_topic")
+    def handle_unsubscribe_topic(data):
+        """
+        Handle client unsubscription from MQTT topics.
+
+        Args:
+            data: Dictionary with 'topic' or 'topics' key containing topic pattern(s).
+        """
+        from flask import request
+        from app.services.subscription_manager import get_subscription_manager
+
+        client_id = request.sid
+
+        if not isinstance(data, dict):
+            emit("error", {"message": "Invalid topic unsubscription data format"})
+            return
+
+        # Support both single topic and multiple topics
+        topics = data.get("topics", [])
+        if not topics:
+            topic = data.get("topic")
+            if topic:
+                topics = [topic]
+
+        if not isinstance(topics, list):
+            topics = [topics]
+
+        subscription_manager = get_subscription_manager()
+        unsubscribed = []
+
+        for topic in topics:
+            if isinstance(topic, str) and topic:
+                subscription_manager.unsubscribe_client(client_id, topic)
+                unsubscribed.append(topic)
+                logger.debug(f"Client {client_id} unsubscribed from MQTT topic: {topic}")
+
+        emit("topic_unsubscribed", {"topics": unsubscribed})
+
+    @sio.on("get_topic_subscriptions")
+    def handle_get_topic_subscriptions():
+        """Get list of MQTT topics the client is subscribed to."""
+        from flask import request
+        from app.services.subscription_manager import get_subscription_manager
+
+        client_id = request.sid
+        subscription_manager = get_subscription_manager()
+        subscriptions = subscription_manager.get_client_subscriptions(client_id)
+
+        emit("topic_subscriptions", {"topics": subscriptions})
 
 
 def _send_initial_data_for_channels(channels: list[str]) -> None:

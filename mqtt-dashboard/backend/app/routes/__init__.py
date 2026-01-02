@@ -54,6 +54,10 @@ def api_root():
                 "unsubscribe": "Unsubscribe from metric channels",
                 "get_channels": "Request list of available channels",
                 "ping_broker": "Check broker connection status",
+                "subscribe_topic": "Subscribe to MQTT topics for live messages",
+                "unsubscribe_topic": "Unsubscribe from MQTT topics",
+                "get_topic_subscriptions": "Get list of subscribed MQTT topics",
+                "topic_message": "Emitted when a message is received on a subscribed topic",
             },
             "channels": [
                 "broker_stats",
