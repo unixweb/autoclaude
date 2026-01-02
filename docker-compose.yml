@@ -267,6 +267,7 @@ services:
       # Flask-Konfiguration
       - FLASK_ENV=${FLASK_ENV:-production}
       - FLASK_DEBUG=${FLASK_DEBUG:-0}
+      - SECRET_KEY=${SECRET_KEY}
 
       # MQTT-Broker-Verbindung
       - MQTT_BROKER_HOST=${MQTT_BROKER_HOST:-mosquitto}
