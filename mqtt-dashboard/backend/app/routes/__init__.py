@@ -12,8 +12,10 @@ api_bp = Blueprint("api", __name__)
 
 # Import and register child blueprints
 from app.routes.broker import broker_bp
+from app.routes.clients import clients_bp
 
 api_bp.register_blueprint(broker_bp, url_prefix="/broker")
+api_bp.register_blueprint(clients_bp, url_prefix="/clients")
 
 
 @api_bp.route("/")
@@ -30,6 +32,9 @@ def api_root():
             "broker_stats_summary": "/api/broker/stats/summary",
             "broker_version": "/api/broker/version",
             "clients": "/api/clients",
+            "clients_count": "/api/clients/count",
+            "clients_active": "/api/clients/active",
+            "clients_stats": "/api/clients/stats",
             "topics": "/api/topics",
             "messages": "/api/messages",
         },
