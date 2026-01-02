@@ -9,9 +9,13 @@ Flask-SocketIO>=5.3.0
 # MQTT Client
 paho-mqtt>=2.0.0
 
+# Redis client for pub/sub
+redis>=5.0.0
+
 # WebSocket support
 python-socketio>=5.10.0
-eventlet>=0.35.0
+gevent>=24.11.1
+gevent-websocket>=0.10.1
 
 # Utilities
 python-dotenv>=1.0.0
