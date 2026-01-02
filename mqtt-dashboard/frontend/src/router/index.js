@@ -4,6 +4,7 @@ import Overview from "../views/Overview.vue";
 import Clients from "../views/Clients.vue";
 import Topics from "../views/Topics.vue";
 import Publish from "../views/Publish.vue";
+import Monitor from "../views/Monitor.vue";
 
 // Placeholder component for routes that will be implemented later
 const PlaceholderView = {
@@ -57,7 +58,7 @@ const routes = [
       {
         path: "monitor",
         name: "monitor",
-        component: PlaceholderView,
+        component: Monitor,
         meta: {
           title: "Live Monitor",
         },
