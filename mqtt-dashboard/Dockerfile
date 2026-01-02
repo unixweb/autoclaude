@@ -56,6 +56,10 @@ COPY backend/ ./
 # Copy built frontend from the first stage
 COPY --from=frontend-builder /app/frontend/dist ./static
 
+# Copy docker-entrypoint.sh script
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Update Flask app to serve static files
 # Create a simple wrapper that serves static files with Flask-SocketIO support
 RUN cat > /app/wsgi.py << 'EOF'
@@ -143,6 +147,9 @@ EXPOSE 5000
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:5000/health || exit 1
+
+# Entrypoint script for proper initialization
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # Default command: run with Gunicorn + eventlet for WebSocket support
 # Use eventlet worker class for Flask-SocketIO compatibility
