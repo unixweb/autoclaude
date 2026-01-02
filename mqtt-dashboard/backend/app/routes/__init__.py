@@ -10,6 +10,11 @@ from flask import Blueprint
 # Create main API blueprint
 api_bp = Blueprint("api", __name__)
 
+# Import and register child blueprints
+from app.routes.broker import broker_bp
+
+api_bp.register_blueprint(broker_bp, url_prefix="/broker")
+
 
 @api_bp.route("/")
 def api_root():
@@ -20,6 +25,10 @@ def api_root():
         "endpoints": {
             "health": "/health",
             "broker": "/api/broker",
+            "broker_status": "/api/broker/status",
+            "broker_stats": "/api/broker/stats",
+            "broker_stats_summary": "/api/broker/stats/summary",
+            "broker_version": "/api/broker/version",
             "clients": "/api/clients",
             "topics": "/api/topics",
             "messages": "/api/messages",
