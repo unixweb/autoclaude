@@ -3,6 +3,8 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { brokerApi, getSocket, connectSocket } from "../api/client.js";
 import StatCard from "../components/StatCard.vue";
 import BrokerHealth from "../components/BrokerHealth.vue";
+import ThroughputChart from "../components/ThroughputChart.vue";
+import ConnectionsChart from "../components/ConnectionsChart.vue";
 
 // State
 const loading = ref(true);
@@ -370,6 +372,18 @@ onUnmounted(() => {
           icon="🧠"
           :loading="loading"
         />
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900 mb-3">Performance Trends</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Throughput Chart -->
+        <ThroughputChart :broker-stats="brokerStats" :time-window="60" />
+
+        <!-- Connections Chart -->
+        <ConnectionsChart :broker-stats="brokerStats" :time-window="60" />
       </div>
     </div>
   </div>
