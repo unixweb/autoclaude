@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import DashboardLayout from "../layouts/DashboardLayout.vue";
 import Overview from "../views/Overview.vue";
 import Clients from "../views/Clients.vue";
+import Topics from "../views/Topics.vue";
 
 // Placeholder component for routes that will be implemented later
 const PlaceholderView = {
@@ -39,7 +40,7 @@ const routes = [
       {
         path: "topics",
         name: "topics",
-        component: PlaceholderView,
+        component: Topics,
         meta: {
           title: "Topics Explorer",
         },

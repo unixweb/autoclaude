@@ -76,78 +76,80 @@ const hasNoResults = computed(() => {
       <p class="text-gray-500 text-sm">No client categories found</p>
     </div>
 
-    <!-- Desktop Table -->
-    <div v-else class="hidden md:block overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Category
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Description
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Count
-            </th>
-            <th
-              scope="col"
-              class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-            >
-              Status
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr
-            v-for="category in categories"
-            :key="category.name"
-            class="hover:bg-gray-50 transition-colors"
-          >
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <span class="text-lg mr-2">{{ getStatusIcon(category.status) }}</span>
-                <span class="text-sm font-medium text-gray-900">
-                  {{ category.name }}
-                </span>
-              </div>
-            </td>
-            <td class="px-6 py-4">
-              <div class="text-sm text-gray-600">
-                {{ category.description }}
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm font-bold text-gray-900">
-                {{ category.count || 0 }}
-              </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span
-                :class="[
-                  'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                  getStatusClass(category.status),
-                ]"
+    <!-- Data Display -->
+    <div v-else>
+      <!-- Desktop Table -->
+      <div class="hidden md:block overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
               >
-                {{ formatStatus(category.status) }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+                Category
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Description
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Count
+              </th>
+              <th
+                scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+              >
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr
+              v-for="category in categories"
+              :key="category.name"
+              class="hover:bg-gray-50 transition-colors"
+            >
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <span class="text-lg mr-2">{{ getStatusIcon(category.status) }}</span>
+                  <span class="text-sm font-medium text-gray-900">
+                    {{ category.name }}
+                  </span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-600">
+                  {{ category.description }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-bold text-gray-900">
+                  {{ category.count || 0 }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span
+                  :class="[
+                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                    getStatusClass(category.status),
+                  ]"
+                >
+                  {{ formatStatus(category.status) }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- Mobile Cards -->
-    <div v-else class="md:hidden space-y-3">
+      <!-- Mobile Cards -->
+      <div class="md:hidden space-y-3">
       <div
         v-for="category in categories"
         :key="category.name"
@@ -183,6 +185,7 @@ const hasNoResults = computed(() => {
             {{ category.count || 0 }}
           </span>
         </div>
+      </div>
       </div>
     </div>
   </div>

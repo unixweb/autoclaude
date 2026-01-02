@@ -3,7 +3,7 @@
   "spec": "014-add-mqtt-broker-management-dashboard",
   "state": "building",
   "subtasks": {
-    "completed": 13,
+    "completed": 15,
     "total": 28,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 6,
+    "number": 8,
     "started_at": "2026-01-02T13:15:58.971265"
   },
-  "last_update": "2026-01-02T13:31:27.558575"
+  "last_update": "2026-01-02T13:38:02.016216"
 }
