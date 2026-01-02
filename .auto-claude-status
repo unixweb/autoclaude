@@ -3,13 +3,13 @@
   "spec": "014-add-mqtt-broker-management-dashboard",
   "state": "building",
   "subtasks": {
-    "completed": 10,
+    "completed": 13,
     "total": 28,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Message & Topic Management API",
+    "current": "Dashboard Frontend - Core Views",
     "id": null,
     "total": 4
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 3,
+    "number": 6,
     "started_at": "2026-01-02T13:15:58.971265"
   },
-  "last_update": "2026-01-02T13:21:57.581348"
+  "last_update": "2026-01-02T13:31:27.558575"
 }

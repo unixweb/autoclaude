@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import DashboardLayout from "../layouts/DashboardLayout.vue";
+import Overview from "../views/Overview.vue";
 
 // Placeholder component for routes that will be implemented later
 const PlaceholderView = {
@@ -21,7 +22,7 @@ const routes = [
       {
         path: "",
         name: "overview",
-        component: PlaceholderView,
+        component: Overview,
         meta: {
           title: "Broker Overview",
         },
