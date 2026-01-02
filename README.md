@@ -1,6 +1,6 @@
 # Docker Compose Multi-Container Umgebung
 
-Eine vollständige Docker Compose Konfiguration mit Web-Server, PostgreSQL-Datenbank, Mailhog Email-Testing, Adminer Datenbank-Administration und **Eclipse Mosquitto MQTT Broker mit SSL/TLS-Verschlüsselung**.
+Eine vollständige Docker Compose Konfiguration mit Web-Server, PostgreSQL-Datenbank, Mailhog Email-Testing, Adminer Datenbank-Administration, **Eclipse Mosquitto MQTT Broker mit SSL/TLS-Verschlüsselung** und **MQTT Management Dashboard**.
 
 ## 📋 Inhaltsverzeichnis
 
@@ -9,6 +9,7 @@ Eine vollständige Docker Compose Konfiguration mit Web-Server, PostgreSQL-Daten
 - [Neue Features](#neue-features)
 - [Schnellstart](#schnellstart)
 - [MQTT Broker Setup](#mqtt-broker-setup)
+- [MQTT Dashboard](#mqtt-dashboard)
 - [SSL/TLS Zertifikate](#ssltls-zertifikate)
 - [Scripts Dokumentation](#scripts-dokumentation)
 - [Automatische Zertifikatserneuerung](#automatische-zertifikatserneuerung)
@@ -23,6 +24,7 @@ Diese Docker Compose Umgebung bietet:
 - **Mailhog** für E-Mail Testing (SMTP + Web-UI)
 - **Adminer** für Datenbank-Verwaltung
 - **🆕 Eclipse Mosquitto** MQTT Broker mit SSL/TLS
+- **🆕 MQTT Dashboard** Web-basierte Broker-Verwaltung
 - **🆕 Automatische SSL-Zertifikate** via Let's Encrypt
 
 ## 🚀 Dienste
@@ -34,6 +36,7 @@ Diese Docker Compose Umgebung bietet:
 | **mailhog** | E-Mail Testing | 1025 (SMTP), 8025 (UI) | http://localhost:8025 |
 | **adminer** | Datenbank-Admin | 8081 | http://localhost:8081 |
 | **🆕 mosquitto** | MQTT Broker | 1883, 8883, 9001, 8084 | - |
+| **🆕 mqtt-dashboard** | MQTT Management Dashboard | 8082 | http://localhost:8082 |
 
 ## 🆕 Neue Features
 
@@ -199,6 +202,807 @@ mosquitto  | Opening websockets listen socket on port 9001.
 mosquitto  | Opening websockets listen socket on port 8084.
 mosquitto  | mosquitto version 2.0.22 running
 ```
+
+## 📊 MQTT Dashboard
+
+### Übersicht
+
+Das **MQTT Dashboard** ist eine moderne, web-basierte Verwaltungsoberfläche für den Mosquitto MQTT Broker. Es bietet Echtzeit-Monitoring, Topic-Management und Message-Publishing über eine intuitive grafische Benutzeroberfläche.
+
+**Technologie-Stack:**
+- 🎨 **Frontend:** Vue.js 3 mit Vite und Tailwind CSS
+- 🔧 **Backend:** Python Flask mit Flask-SocketIO
+- 🔌 **MQTT Client:** paho-mqtt (Python)
+- ⚡ **Real-Time:** WebSocket-basierte Live-Updates
+- 🐳 **Deployment:** Docker Multi-Stage Build
+
+### Zugriff
+
+```
+URL: http://localhost:8082
+Port: 8082 (konfigurierbar via MQTT_DASHBOARD_PORT)
+```
+
+Das Dashboard startet automatisch mit `docker compose up -d` und benötigt einen laufenden Mosquitto Broker.
+
+### Features
+
+#### 1. 📈 Broker Overview
+**Echtzeit-Statistiken und Broker-Status:**
+- Broker-Version und Uptime
+- Verbundene Clients (aktuell, maximum, gesamt)
+- Message Throughput (Nachrichten/Minute)
+- Bytes Transferiert (Sent/Received)
+- Subscriptions und Retained Messages
+- Broker Load (1min, 5min, 15min)
+- Heap Memory Nutzung
+- Live Performance Charts
+
+**Screenshots-Metriken:**
+- Broker Health mit Kapazitätsanzeige
+- Client Statistiken mit Trends
+- Message Throughput (empfangen/gesendet)
+- Datenübertragung (Bytes)
+- Broker Load und Memory
+
+#### 2. 👥 Connected Clients
+**Client-Monitoring:**
+- Liste verbundener Clients
+- Gesamtanzahl (connected, disconnected, total)
+- Peak Connections Tracking
+- Connection Activity Rates (1min, 5min, 15min)
+- Expired Sessions Anzeige
+- Echtzeit-Updates via WebSocket
+- Such- und Filterfunktion
+
+**Client-Kategorien:**
+- ✅ Connected: Aktuell verbundene Clients
+- ❌ Disconnected: Getrennte Clients (persistent sessions)
+- ⏱️ Expired: Abgelaufene Sessions
+- 📊 Total: Gesamtzahl getrackte Clients
+
+#### 3. 📂 Topics Explorer
+**Topic-Management und Monitoring:**
+- Liste aller aktiven Topics
+- Message Count pro Topic
+- Last Activity Timestamp
+- QoS Badge (0, 1, 2)
+- Retained Message Indicator
+- Such- und Filterfunktion (MQTT Wildcards unterstützt)
+- Live-Subscription zu Topics
+- JSON Payload Formatierung
+- Message History anzeigen
+
+**Topic-Filter:**
+- `#` - Multi-level Wildcard (alle Subtopics)
+- `+` - Single-level Wildcard (eine Ebene)
+- Prefix-Filter für schnelle Suche
+- Case-sensitive Matching
+
+#### 4. 📤 Message Publisher
+**MQTT Messages senden:**
+- Topic-Eingabe mit Validierung
+- Payload Editor mit Text/JSON Modus
+- QoS Selector (0, 1, 2)
+- Retain Flag Toggle
+- JSON Templates (Object, Array, Sensor Data)
+- JSON Formatierung und Minification
+- JSON Validierung mit Fehleranzeige
+- Success/Error Feedback
+
+**Einschränkungen:**
+- ❌ Keine Wildcards (`#`, `+`) im Topic erlaubt
+- ❌ Keine `$SYS` Topics publishbar
+- ✅ Maximale Payload-Größe: 256KB
+
+#### 5. 🔍 Live Monitor
+**Echtzeit Message Feed:**
+- Multi-Topic Subscription Management
+- Live Message Feed mit Topic, Payload, Timestamp
+- Pause/Resume Funktion
+- Clear Message History
+- Message Count Indicator
+- Expandable Message Details
+- JSON Payload Formatierung
+- Preset Topic Subscriptions:
+  - All Topics (`#`)
+  - System Topics (`$SYS/#`)
+  - All Sensors (`sensors/#`)
+  - Room Temperatures (`sensors/+/temperature`)
+- Wildcard Pattern Matching
+- Per-Subscription Message Counts
+
+**Features:**
+- ⏸️ Pause/Resume für Message Feed
+- 🗑️ Clear History Button
+- 📊 Message Count Tracking
+- 🔍 Expandable Payloads (Click to expand/collapse)
+- 🎨 Topic Badge Color Coding
+- 📈 Message Limit (500 max)
+
+#### 6. ⚙️ Settings
+**Broker-Konfiguration anzeigen:**
+- Connection Details (Host, Port, Protocol)
+- Listener Configuration
+- Persistence Settings
+- Security Settings (TLS/SSL, Authentication)
+- Connection Test Button
+- Real-Time Status Updates
+
+**Hinweis:** Konfigurationsänderungen erfolgen über `mosquitto/config/mosquitto.conf` (read-only im Dashboard).
+
+### Installation & Startup
+
+#### Schritt 1: Umgebungsvariablen konfigurieren
+
+```bash
+# .env Datei bearbeiten
+nano .env
+```
+
+**Dashboard-spezifische Variablen:**
+```bash
+# Dashboard Port
+MQTT_DASHBOARD_PORT=8082
+
+# Flask Konfiguration (Development)
+FLASK_ENV=development
+FLASK_DEBUG=1
+
+# MQTT Broker Connection
+MQTT_BROKER_HOST=mosquitto
+MQTT_BROKER_PORT=1883
+MQTT_CLIENT_ID=mqtt-dashboard
+MQTT_KEEPALIVE=60
+
+# Optional: MQTT Authentifizierung
+MQTT_USERNAME=
+MQTT_PASSWORD=
+
+# Optional: TLS/SSL
+MQTT_USE_TLS=false
+MQTT_TLS_INSECURE=false
+
+# WebSocket Backend (eventlet für Production)
+SOCKETIO_ASYNC_MODE=threading
+```
+
+#### Schritt 2: Dashboard starten
+
+```bash
+# Alle Services inkl. Dashboard starten
+docker compose up -d
+
+# Nur Dashboard neu starten
+docker compose restart mqtt-dashboard
+
+# Dashboard Logs anzeigen
+docker compose logs -f mqtt-dashboard
+```
+
+#### Schritt 3: Dashboard aufrufen
+
+```
+Öffne Browser: http://localhost:8082
+```
+
+**Erwartete Ausgabe (Logs):**
+```
+mqtt-dashboard | ========================================
+mqtt-dashboard | Starting MQTT Dashboard...
+mqtt-dashboard | ========================================
+mqtt-dashboard | Configuration:
+mqtt-dashboard | - Flask Environment: development
+mqtt-dashboard | - MQTT Broker: mosquitto:1883
+mqtt-dashboard | - MQTT Client ID: mqtt-dashboard
+mqtt-dashboard | - Authentication: Disabled
+mqtt-dashboard | - TLS/SSL: Disabled
+mqtt-dashboard | - SocketIO Mode: threading
+mqtt-dashboard | ========================================
+mqtt-dashboard | Waiting for MQTT broker to be ready...
+mqtt-dashboard | Successfully connected to mosquitto:1883
+mqtt-dashboard | ========================================
+mqtt-dashboard | Starting Gunicorn server...
+mqtt-dashboard | [INFO] Listening at: http://0.0.0.0:5000
+```
+
+### API Dokumentation
+
+Das Dashboard bietet eine vollständige REST API und WebSocket-Schnittstelle.
+
+#### REST API Endpoints
+
+**Broker Status & Statistiken:**
+```bash
+# Health Check
+GET /health
+Response: {"status": "healthy", "mqtt_connected": true}
+
+# Broker Status
+GET /api/broker/status
+Response: {"connected": true, "host": "mosquitto", "port": 1883}
+
+# Broker Statistiken (vollständig)
+GET /api/broker/stats
+Response: {
+  "version": "2.0.22",
+  "uptime": 3600,
+  "clients": {"connected": 5, "maximum": 10, "total": 15},
+  "messages": {"received": 1000, "sent": 950},
+  ...
+}
+
+# Broker Statistiken (Summary)
+GET /api/broker/stats/summary
+Response: {"version": "2.0.22", "uptime": "1 hour", "clients": 5}
+
+# Broker Version
+GET /api/broker/version
+Response: {"version": "mosquitto version 2.0.22", "uptime": "1 hour 23 minutes"}
+```
+
+**Client Monitoring:**
+```bash
+# Client-Liste (Kategorien)
+GET /api/clients
+Response: {
+  "categories": {
+    "connected": {"name": "Connected", "count": 5},
+    "disconnected": {"name": "Disconnected", "count": 2}
+  },
+  "summary": {"connected": 5, "total": 15}
+}
+
+# Client Count
+GET /api/clients/count
+Response: {"connected": 5, "disconnected": 2, "total": 7, "maximum": 10}
+
+# Active Clients
+GET /api/clients/active
+Response: {"active": 5, "connect_rate_1min": 0.5}
+
+# Client Statistiken (detailliert)
+GET /api/clients/stats
+Response: {...}
+```
+
+**Topic Management:**
+```bash
+# Active Topics
+GET /api/topics?filter=sensors/*&limit=50
+Response: {
+  "topics": [
+    {
+      "topic": "sensors/temp/living_room",
+      "message_count": 150,
+      "last_seen": "2026-01-02T21:30:00Z",
+      "qos": 1,
+      "retained": false
+    }
+  ],
+  "count": 1
+}
+
+# Topic Details
+GET /api/topics/{topic_name}
+Response: {...}
+
+# Topic Count
+GET /api/topics/count
+Response: {"count": 42}
+
+# Topic Summary
+GET /api/topics/summary
+Response: [{"topic": "...", "message_count": 10}]
+```
+
+**Message Publishing:**
+```bash
+# Publish Message
+POST /api/messages/publish
+Content-Type: application/json
+
+Request Body:
+{
+  "topic": "sensors/temp/bedroom",
+  "payload": "{\"temperature\": 22.5, \"humidity\": 45}",
+  "qos": 1,
+  "retain": false
+}
+
+Response: {
+  "success": true,
+  "message": "Message published successfully",
+  "topic": "sensors/temp/bedroom"
+}
+```
+
+#### WebSocket Events
+
+**Verbindung:**
+```javascript
+// Socket.IO Client
+import io from 'socket.io-client';
+const socket = io('http://localhost:8082');
+
+socket.on('connect', () => {
+  console.log('Connected to MQTT Dashboard');
+});
+```
+
+**Event Handlers:**
+
+```javascript
+// Subscribe to metric channel
+socket.emit('subscribe', 'broker_stats');
+
+// Available channels:
+// - broker_stats: Vollständige Broker-Statistiken (alle 5s)
+// - broker_summary: Leichtgewichtige Summary
+// - clients: Client-Statistiken
+// - messages: Message-Metriken
+// - bytes: Bytes Transferred
+// - load: Broker Load Metriken
+
+// Receive broker stats
+socket.on('broker_stats', (data) => {
+  console.log('Broker Stats:', data);
+});
+
+// Unsubscribe from channel
+socket.emit('unsubscribe', 'broker_stats');
+
+// Get list of available channels
+socket.emit('get_channels', (channels) => {
+  console.log('Available channels:', channels);
+});
+
+// Test broker connection
+socket.emit('ping_broker', (response) => {
+  console.log('Broker ping:', response);
+});
+```
+
+**Topic Subscriptions:**
+
+```javascript
+// Subscribe to MQTT topic
+socket.emit('subscribe_topic', 'sensors/+/temperature');
+
+// Receive messages from subscribed topics
+socket.on('topic_message', (data) => {
+  console.log('Topic:', data.topic);
+  console.log('Payload:', data.payload);
+  console.log('QoS:', data.qos);
+  console.log('Retained:', data.retained);
+  console.log('Timestamp:', data.timestamp);
+});
+
+// Unsubscribe from topic
+socket.emit('unsubscribe_topic', 'sensors/+/temperature');
+
+// Get active topic subscriptions
+socket.emit('get_topic_subscriptions', (topics) => {
+  console.log('Subscribed topics:', topics);
+});
+```
+
+### Konfiguration
+
+#### Umgebungsvariablen (.env)
+
+```bash
+# ============================================
+# MQTT Dashboard Configuration
+# ============================================
+
+# Dashboard Port (Standard: 8082)
+MQTT_DASHBOARD_PORT=8082
+
+# Flask Application Settings
+FLASK_ENV=development           # Options: development, production
+FLASK_DEBUG=1                   # 0 = disabled, 1 = enabled (nur development!)
+
+# MQTT Broker Connection
+MQTT_BROKER_HOST=mosquitto      # Hostname des MQTT Brokers
+MQTT_BROKER_PORT=1883           # MQTT Port (1883 unencrypted, 8883 TLS)
+MQTT_CLIENT_ID=mqtt-dashboard   # Eindeutige Client-ID
+MQTT_KEEPALIVE=60               # Keep-alive interval in seconds
+
+# Optional: MQTT Authentication
+MQTT_USERNAME=                  # MQTT Username (leer = keine Auth)
+MQTT_PASSWORD=                  # MQTT Password (leer = keine Auth)
+
+# Optional: TLS/SSL Configuration
+MQTT_USE_TLS=false              # true = TLS aktivieren, false = deaktiviert
+MQTT_TLS_INSECURE=false         # true = Zertifikat nicht validieren (nur Development!)
+
+# WebSocket Backend
+SOCKETIO_ASYNC_MODE=threading   # Options: threading, eventlet
+                                # threading = Development
+                                # eventlet = Production (bessere Performance)
+```
+
+**Wichtig für Production:**
+```bash
+FLASK_ENV=production
+FLASK_DEBUG=0
+MQTT_USE_TLS=true
+MQTT_TLS_INSECURE=false
+MQTT_USERNAME=admin
+MQTT_PASSWORD=CHANGE_ME_TO_SECURE_PASSWORD
+SOCKETIO_ASYNC_MODE=eventlet
+```
+
+#### Docker Compose Konfiguration
+
+```yaml
+mqtt-dashboard:
+  build:
+    context: ./mqtt-dashboard
+    dockerfile: Dockerfile
+  container_name: app_mqtt_dashboard
+  restart: unless-stopped
+
+  ports:
+    - "${MQTT_DASHBOARD_PORT:-8082}:5000"
+
+  environment:
+    FLASK_ENV: ${FLASK_ENV:-production}
+    FLASK_DEBUG: ${FLASK_DEBUG:-0}
+    MQTT_BROKER_HOST: ${MQTT_BROKER_HOST:-mosquitto}
+    MQTT_BROKER_PORT: ${MQTT_BROKER_PORT:-1883}
+    MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-mqtt-dashboard}
+    MQTT_KEEPALIVE: ${MQTT_KEEPALIVE:-60}
+    MQTT_USERNAME: ${MQTT_USERNAME:-}
+    MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+    MQTT_USE_TLS: ${MQTT_USE_TLS:-false}
+    MQTT_TLS_INSECURE: ${MQTT_TLS_INSECURE:-false}
+    SOCKETIO_ASYNC_MODE: ${SOCKETIO_ASYNC_MODE:-eventlet}
+
+  depends_on:
+    mosquitto:
+      condition: service_healthy
+
+  networks:
+    - app_network
+
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 20s
+```
+
+### Development Setup
+
+#### Lokale Entwicklung (ohne Docker)
+
+**Backend:**
+```bash
+cd mqtt-dashboard/backend
+
+# Virtual Environment erstellen
+python3 -m venv venv
+source venv/bin/activate  # Linux/Mac
+# oder
+venv\Scripts\activate     # Windows
+
+# Dependencies installieren
+pip install -r requirements.txt
+
+# Environment Variables setzen
+export FLASK_ENV=development
+export FLASK_DEBUG=1
+export MQTT_BROKER_HOST=localhost
+export MQTT_BROKER_PORT=1883
+
+# Flask Server starten
+python -m app.main
+```
+
+**Frontend:**
+```bash
+cd mqtt-dashboard/frontend
+
+# Dependencies installieren
+npm install
+
+# Dev Server starten
+npm run dev
+
+# Build für Production
+npm run build
+```
+
+**URLs (Development):**
+- Frontend: http://localhost:5173 (Vite Dev Server)
+- Backend API: http://localhost:5000
+- WebSocket: ws://localhost:5000/socket.io
+
+### Troubleshooting
+
+#### Problem: Dashboard zeigt "Broker Disconnected"
+
+**Symptom:**
+```
+Dashboard UI: "Broker: Offline"
+API Response: {"connected": false}
+```
+
+**Lösung:**
+```bash
+# 1. Mosquitto Status prüfen
+docker compose ps mosquitto
+# Sollte zeigen: "healthy"
+
+# 2. Dashboard Logs prüfen
+docker compose logs mqtt-dashboard
+# Suche nach: "Failed to connect to MQTT broker"
+
+# 3. MQTT Broker Connection testen
+docker exec app_mqtt_dashboard curl -f http://localhost:5000/api/broker/status
+
+# 4. Environment Variables prüfen
+docker compose exec mqtt-dashboard env | grep MQTT_
+
+# 5. Dashboard neu starten
+docker compose restart mqtt-dashboard
+```
+
+**Häufige Ursachen:**
+- ❌ Mosquitto Container nicht gestartet
+- ❌ Falsche `MQTT_BROKER_HOST` (sollte `mosquitto` sein)
+- ❌ Falscher `MQTT_BROKER_PORT` (1883 oder 8883)
+- ❌ Authentifizierung aktiviert, aber keine Credentials
+- ❌ TLS aktiviert, aber Zertifikate fehlen
+
+#### Problem: WebSocket Verbindung fehlgeschlagen
+
+**Symptom:**
+```
+Browser Console: "WebSocket connection to 'ws://localhost:8082' failed"
+Dashboard: Keine Echtzeit-Updates
+```
+
+**Lösung:**
+```bash
+# 1. Browser Console öffnen und prüfen
+# Chrome/Firefox: F12 -> Console
+
+# 2. WebSocket Endpoint testen
+curl -i http://localhost:8082/socket.io/
+
+# 3. CORS-Fehler?
+# Prüfe ob Frontend und Backend auf gleicher Origin laufen
+
+# 4. Container Logs prüfen
+docker compose logs -f mqtt-dashboard | grep -i websocket
+
+# 5. Firewall/Proxy-Probleme?
+# Prüfe ob Port 8082 erreichbar ist
+telnet localhost 8082
+```
+
+**Lösung:**
+```bash
+# WebSocket-Modus auf eventlet umstellen (.env)
+SOCKETIO_ASYNC_MODE=eventlet
+
+# Dashboard neu starten
+docker compose restart mqtt-dashboard
+```
+
+#### Problem: "No module named 'app'" beim Start
+
+**Symptom:**
+```
+ModuleNotFoundError: No module named 'app'
+```
+
+**Lösung:**
+```bash
+# 1. Dockerfile neu bauen
+docker compose build mqtt-dashboard
+
+# 2. Container neu starten
+docker compose up -d mqtt-dashboard
+
+# 3. Falls immer noch Fehler:
+# Alte Images entfernen und neu bauen
+docker compose down
+docker rmi $(docker images 'claude-mqtt-dashboard' -q)
+docker compose up -d --build
+```
+
+#### Problem: Dashboard lädt langsam oder zeigt leere Daten
+
+**Symptom:**
+- Dashboard UI zeigt "Loading..." dauerhaft
+- API Endpoints returnen `503 Service Unavailable`
+- Metriken zeigen `0` oder `null`
+
+**Ursache:**
+```
+SysMonitor oder TopicTracker nicht gestartet/subscribed
+```
+
+**Lösung:**
+```bash
+# 1. Backend Logs prüfen
+docker compose logs mqtt-dashboard | grep -i "sys_monitor\|topic_tracker"
+
+# Sollte zeigen:
+# "Successfully subscribed to $SYS/#"
+# "Successfully subscribed to # (all topics)"
+
+# 2. API Status prüfen
+curl http://localhost:8082/api/broker/status
+
+# Response sollte enthalten:
+# "sys_monitor_subscribed": true
+
+# 3. Manuell reconnecten
+docker compose restart mqtt-dashboard
+
+# 4. Mosquitto $SYS Topics prüfen
+docker exec app_mosquitto mosquitto_sub -h localhost -p 1883 -t '$SYS/#' -C 5
+```
+
+#### Problem: Charts werden nicht angezeigt
+
+**Symptom:**
+- Performance Trends Section leer
+- "Waiting for data..." dauerhaft
+
+**Lösung:**
+```bash
+# Charts benötigen Zeit zum Sammeln von Datenpunkten
+# Warte mindestens 30 Sekunden nach Dashboard-Start
+
+# 1. Browser Console öffnen
+# Prüfe auf JavaScript Fehler
+
+# 2. WebSocket Subscription prüfen
+# Console sollte zeigen: "Subscribed to broker_stats"
+
+# 3. Browser Cache leeren
+# Chrome: Ctrl+Shift+Del
+# Firefox: Ctrl+Shift+Del
+
+# 4. Hard Reload
+# Chrome/Firefox: Ctrl+Shift+R
+```
+
+#### Problem: "Permission denied" bei Zertifikaten
+
+**Symptom:**
+```
+Error: SSL/TLS connection failed
+Permission denied: /mosquitto/certs/...
+```
+
+**Lösung:**
+```bash
+# Zertifikats-Berechtigungen korrigieren
+chmod 644 mosquitto/certs/*.crt
+chmod 644 mosquitto/certs/*.key
+
+# Dashboard mit TLS-Support neu starten
+docker compose restart mqtt-dashboard
+```
+
+### Performance Optimierung
+
+**Empfehlungen für Production:**
+
+```bash
+# 1. WebSocket Backend auf eventlet umstellen
+SOCKETIO_ASYNC_MODE=eventlet
+
+# 2. Flask Debug Mode deaktivieren
+FLASK_ENV=production
+FLASK_DEBUG=0
+
+# 3. Frontend Build optimieren
+cd mqtt-dashboard/frontend
+npm run build  # Bereits im Dockerfile
+
+# 4. Gunicorn Worker anpassen (wsgi.py)
+# Derzeit: 1 Worker, 4 Threads
+# Für bessere Performance: 2-4 Worker
+gunicorn --workers 4 --threads 2 --bind 0.0.0.0:5000 ...
+```
+
+**Resource Limits:**
+```yaml
+# docker-compose.yml
+mqtt-dashboard:
+  # ...
+  deploy:
+    resources:
+      limits:
+        cpus: '1.0'
+        memory: 512M
+      reservations:
+        cpus: '0.5'
+        memory: 256M
+```
+
+### Sicherheitshinweise
+
+**Production Checklist:**
+
+- [ ] `FLASK_ENV=production` und `FLASK_DEBUG=0`
+- [ ] MQTT Authentifizierung aktiviert (`MQTT_USERNAME`, `MQTT_PASSWORD`)
+- [ ] TLS/SSL aktiviert (`MQTT_USE_TLS=true`)
+- [ ] Starke Passwörter verwenden
+- [ ] Dashboard nur im internen Netzwerk zugänglich
+- [ ] Reverse Proxy (nginx) mit HTTPS verwenden
+- [ ] Rate Limiting für API Endpoints
+- [ ] WebSocket CORS korrekt konfigurieren
+
+**Reverse Proxy Beispiel (nginx):**
+```nginx
+server {
+    listen 443 ssl;
+    server_name mqtt-dashboard.example.com;
+
+    ssl_certificate /etc/ssl/certs/dashboard.crt;
+    ssl_certificate_key /etc/ssl/private/dashboard.key;
+
+    location / {
+        proxy_pass http://localhost:8082;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+### Weitere Informationen
+
+**Projekt-Struktur:**
+```
+mqtt-dashboard/
+├── backend/
+│   ├── app/
+│   │   ├── __init__.py           # Flask app factory
+│   │   ├── main.py               # Application entry point
+│   │   ├── config.py             # Configuration
+│   │   ├── mqtt_client.py        # MQTT client wrapper
+│   │   ├── websocket.py          # Flask-SocketIO handlers
+│   │   ├── routes/               # API blueprints
+│   │   ├── services/             # Business logic
+│   │   └── models/               # Data models
+│   ├── tests/                    # Unit tests
+│   ├── requirements.txt          # Python dependencies
+│   └── wsgi.py                   # Gunicorn entry point
+├── frontend/
+│   ├── src/
+│   │   ├── main.js               # Vue.js entry point
+│   │   ├── App.vue               # Root component
+│   │   ├── router/               # Vue Router
+│   │   ├── api/                  # API client
+│   │   ├── components/           # Reusable components
+│   │   ├── views/                # Page components
+│   │   └── assets/               # CSS, images
+│   ├── package.json              # Node.js dependencies
+│   └── vite.config.js            # Vite configuration
+├── Dockerfile                     # Multi-stage build
+├── docker-entrypoint.sh          # Container startup script
+└── README.md                      # Dashboard documentation
+```
+
+**Links:**
+- [Vue.js Dokumentation](https://vuejs.org/)
+- [Flask Dokumentation](https://flask.palletsprojects.com/)
+- [Flask-SocketIO Dokumentation](https://flask-socketio.readthedocs.io/)
+- [paho-mqtt Python Client](https://www.eclipse.org/paho/index.php?page=clients/python/index.php)
+- [Tailwind CSS Dokumentation](https://tailwindcss.com/)
 
 ## 📜 Scripts Dokumentation
 
@@ -666,6 +1470,21 @@ pattern read shared/#
 - **Node.js:** mqtt (npm)
 
 ## 📝 Changelog
+
+### Version 2.1 (Januar 2026)
+
+**Neue Features:**
+- ✨ **MQTT Dashboard** - Web-basierte Broker-Verwaltung
+  - Vue.js 3 + Python Flask Stack
+  - Echtzeit-Monitoring via WebSocket
+  - 6 Dashboard-Views (Overview, Clients, Topics, Publish, Monitor, Settings)
+  - REST API + WebSocket Interface
+  - Docker Multi-Stage Build
+- ✨ Performance Charts (Message Throughput, Client Connections)
+- ✨ Live Topic Explorer mit Message History
+- ✨ Message Publisher mit JSON Editor
+- ✨ Real-Time Message Monitor mit Subscriptions
+- ✨ Comprehensive Unit Tests (40+ tests, 87%+ coverage)
 
 ### Version 2.0 (Dezember 2025)
 

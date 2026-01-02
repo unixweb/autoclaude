@@ -1,0 +1,74 @@
+# MQTT Dashboard Docker Ignore
+# ============================
+# Files and directories to exclude from Docker build context
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+.env
+.env.local
+.env.*.local
+
+# Python test and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.egg-info/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend build artifacts (we build in Docker)
+frontend/dist/
+frontend/.vite/
+
+# Local development files
+*.log
+*.pid
+*.seed
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Test files
+tests/
+test/
+*_test.py
+test_*.py
+
+# Auto-claude spec files
+.auto-claude/
