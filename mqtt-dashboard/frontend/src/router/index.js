@@ -3,6 +3,7 @@ import DashboardLayout from "../layouts/DashboardLayout.vue";
 import Overview from "../views/Overview.vue";
 import Clients from "../views/Clients.vue";
 import Topics from "../views/Topics.vue";
+import Publish from "../views/Publish.vue";
 
 // Placeholder component for routes that will be implemented later
 const PlaceholderView = {
@@ -48,7 +49,7 @@ const routes = [
       {
         path: "publish",
         name: "publish",
-        component: PlaceholderView,
+        component: Publish,
         meta: {
           title: "Publish Message",
         },
