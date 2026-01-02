@@ -237,6 +237,71 @@ services:
       retries: 3
       start_period: 10s
 
+  # ---------------------------------------------------------------------------
+  # MQTT Dashboard (Web-basierte Verwaltung)
+  # ---------------------------------------------------------------------------
+  # Web-Dashboard für die Verwaltung und Überwachung des MQTT-Brokers.
+  # Zeigt Broker-Statistiken, verbundene Clients, Topics und ermöglicht
+  # das Veröffentlichen von Nachrichten über eine grafische Oberfläche.
+  mqtt-dashboard:
+    # Build-Kontext: Dockerfile im mqtt-dashboard Verzeichnis
+    # Multi-Stage-Build: Vue.js Frontend + Python Flask Backend
+    build:
+      context: ./mqtt-dashboard
+      dockerfile: Dockerfile
+
+    # Container-Name für einfachere Identifikation
+    container_name: app_mqtt_dashboard
+
+    # Neustart-Richtlinie bei Fehlern oder System-Neustart
+    restart: unless-stopped
+
+    # Port-Mapping: Host:Container
+    # Dashboard-Web-UI auf Port 8082
+    ports:
+      - "${MQTT_DASHBOARD_PORT:-8082}:5000"
+
+    # Umgebungsvariablen für MQTT-Verbindung
+    # Werte werden aus .env-Datei geladen (siehe .env.example)
+    environment:
+      # Flask-Konfiguration
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - FLASK_DEBUG=${FLASK_DEBUG:-0}
+
+      # MQTT-Broker-Verbindung
+      - MQTT_BROKER_HOST=${MQTT_BROKER_HOST:-mosquitto}
+      - MQTT_BROKER_PORT=${MQTT_BROKER_PORT:-1883}
+      - MQTT_CLIENT_ID=${MQTT_CLIENT_ID:-mqtt-dashboard}
+      - MQTT_KEEPALIVE=${MQTT_KEEPALIVE:-60}
+
+      # MQTT-Authentifizierung (optional)
+      - MQTT_USERNAME=${MQTT_USERNAME:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+
+      # MQTT-TLS-Konfiguration (optional)
+      - MQTT_USE_TLS=${MQTT_USE_TLS:-false}
+      - MQTT_TLS_INSECURE=${MQTT_TLS_INSECURE:-false}
+
+      # WebSocket-Konfiguration
+      - SOCKETIO_ASYNC_MODE=${SOCKETIO_ASYNC_MODE:-eventlet}
+
+    # Netzwerk-Zuordnung für Container-zu-Container-Kommunikation
+    networks:
+      - app_network
+
+    # Abhängigkeit: Dashboard startet erst, wenn Mosquitto bereit ist
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+    # Health Check: Überprüft, ob das Dashboard erreichbar ist
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
 # =============================================================================
 # NETZWERKE (Networks)
 # =============================================================================
