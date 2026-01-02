@@ -13,10 +13,12 @@ api_bp = Blueprint("api", __name__)
 # Import and register child blueprints
 from app.routes.broker import broker_bp
 from app.routes.clients import clients_bp
+from app.routes.messages import messages_bp
 from app.routes.topics import topics_bp
 
 api_bp.register_blueprint(broker_bp, url_prefix="/broker")
 api_bp.register_blueprint(clients_bp, url_prefix="/clients")
+api_bp.register_blueprint(messages_bp, url_prefix="/messages")
 api_bp.register_blueprint(topics_bp, url_prefix="/topics")
 
 
@@ -41,7 +43,7 @@ def api_root():
             "topics_count": "/api/topics/count",
             "topics_summary": "/api/topics/summary",
             "topic_detail": "/api/topics/{topic_name}",
-            "messages": "/api/messages",
+            "messages_publish": "/api/messages/publish",
         },
         "websocket": {
             "endpoint": "/socket.io/",

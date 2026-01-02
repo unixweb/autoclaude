@@ -1,25 +1,25 @@
 {
   "active": true,
-  "spec": "012-fix-broken-shell-scripts-api-integration",
+  "spec": "014-add-mqtt-broker-management-dashboard",
   "state": "building",
   "subtasks": {
-    "completed": 4,
-    "total": 5,
+    "completed": 10,
+    "total": 28,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Validation",
+    "current": "Message & Topic Management API",
     "id": null,
-    "total": 2
+    "total": 4
   },
   "workers": {
     "active": 0,
     "max": 1
   },
   "session": {
-    "number": 5,
-    "started_at": "2025-12-25T12:35:10.326399"
+    "number": 3,
+    "started_at": "2026-01-02T13:15:58.971265"
   },
-  "last_update": "2025-12-25T12:41:25.538051"
+  "last_update": "2026-01-02T13:21:57.581348"
 }
