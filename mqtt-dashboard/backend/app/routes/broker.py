@@ -15,35 +15,21 @@ broker_bp = Blueprint("broker", __name__)
 
 @broker_bp.route("/status")
 def get_broker_status():
-    """
-    Get the current broker connection status.
+    """Get the current broker connection status from Redis."""
+    from app.redis_client import get_redis_client
+    from app.redis_channels import RedisChannels
 
-    Returns:
-        JSON response with broker connection status and details.
+    redis_client = get_redis_client()
 
-    Response format:
-        {
-            "connected": true|false,
-            "broker": {
-                "host": "mosquitto",
-                "port": 1883
-            },
-            "sys_monitor": {
-                "subscribed": true|false
-            }
-        }
-    """
-    mqtt_client = get_mqtt_client()
-    sys_monitor = get_sys_monitor()
+    # Last status is cached in Redis, we subscribe to updates
+    # For now, return connected if Redis is connected
+    # (Bridge service publishes actual MQTT status)
 
     status = {
-        "connected": mqtt_client.is_connected,
+        "connected": redis_client.is_connected(),
         "broker": {
-            "host": mqtt_client.config.MQTT_BROKER_HOST,
-            "port": mqtt_client.config.MQTT_BROKER_PORT,
-        },
-        "sys_monitor": {
-            "subscribed": sys_monitor.is_subscribed,
+            "host": "via mqtt-bridge",
+            "port": 1883,
         },
     }
 

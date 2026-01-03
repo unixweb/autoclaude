@@ -65,10 +65,6 @@ RUN chmod +x /app/docker-entrypoint.sh
 RUN cat > /app/wsgi.py << 'EOF'
 """
 WSGI entry point for the MQTT Dashboard.
-
-This module configures the Flask application to serve the Vue.js frontend
-static files, initializes Flask-SocketIO for WebSocket support, and provides
-the WSGI application instance for Gunicorn.
 """
 
 import os
@@ -76,10 +72,7 @@ from flask import send_from_directory, send_file
 
 from app import create_app
 from app.config import get_config
-from app.mqtt_client import init_mqtt_client
-from app.services.sys_monitor import init_sys_monitor
-from app.services.topic_tracker import init_topic_tracker
-from app.services.subscription_manager import init_subscription_manager
+from app.redis_client import init_redis_client
 from app.websocket import init_socketio, start_background_stats_pusher
 
 
@@ -90,27 +83,23 @@ def create_production_app():
 
     app = create_app(config_name)
 
-    # Initialize MQTT client
-    mqtt_client = init_mqtt_client(config)
-    app.mqtt_client = mqtt_client
+    # Initialize Redis client (replaces MQTT)
+    redis_host = os.environ.get("REDIS_HOST", "redis")
+    redis_port = int(os.environ.get("REDIS_PORT", "6379"))
+    redis_password = os.environ.get("REDIS_PASSWORD")
 
-    # Initialize SysMonitor for $SYS topic subscription
-    sys_monitor = init_sys_monitor(mqtt_client)
-    app.sys_monitor = sys_monitor
-
-    # Initialize TopicTracker for topic discovery
-    topic_tracker = init_topic_tracker(mqtt_client)
-    app.topic_tracker = topic_tracker
-
-    # Initialize SubscriptionManager for per-client topic subscriptions
-    subscription_manager = init_subscription_manager(mqtt_client)
-    app.subscription_manager = subscription_manager
+    redis_client = init_redis_client(
+        host=redis_host,
+        port=redis_port,
+        password=redis_password,
+    )
+    app.redis_client = redis_client
 
     # Initialize Flask-SocketIO for WebSocket support
     socketio = init_socketio(app)
     app.socketio = socketio
 
-    # Start background stats pusher
+    # Start background stats pusher (now pulls from Redis)
     start_background_stats_pusher()
 
     # Serve static files from Vue.js build
@@ -120,8 +109,6 @@ def create_production_app():
     @app.route("/<path:path>")
     def serve_frontend(path):
         """Serve the Vue.js frontend application."""
-        # If path is empty or doesn't exist as a file, serve index.html
-        # This enables Vue Router history mode
         file_path = os.path.join(static_folder, path)
         if path and os.path.isfile(file_path):
             return send_from_directory(static_folder, path)
@@ -152,6 +139,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 
 # Default command: run with Gunicorn + eventlet for WebSocket support
-# Use eventlet worker class for Flask-SocketIO compatibility
-# Single worker is required for WebSocket state management
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--worker-class", "eventlet", "--workers", "1", "--timeout", "60", "--access-logfile", "-", "--error-logfile", "-", "wsgi:app"]
+# Use gunicorn.conf.py for configuration including post_fork hook
+CMD ["gunicorn", "--config", "/app/gunicorn.conf.py", "wsgi:app"]

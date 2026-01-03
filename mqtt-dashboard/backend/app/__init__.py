@@ -38,11 +38,11 @@ def create_app(config_name: str = "development") -> Flask:
     @app.route("/health")
     def health_check():
         """Health check endpoint for Docker and monitoring."""
-        from app.mqtt_client import get_mqtt_client
+        from app.redis_client import get_redis_client
         from app.websocket import get_socketio, get_connected_client_count
 
-        mqtt_client = get_mqtt_client()
-        mqtt_status = "connected" if mqtt_client and mqtt_client.is_connected else "disconnected"
+        redis_client = get_redis_client()
+        redis_status = "connected" if redis_client and redis_client.is_connected() else "disconnected"
 
         socketio = get_socketio()
         websocket_status = "initialized" if socketio else "not_initialized"
@@ -50,10 +50,8 @@ def create_app(config_name: str = "development") -> Flask:
         return {
             "status": "healthy",
             "service": "mqtt-dashboard",
-            "mqtt_broker": {
-                "host": config.MQTT_BROKER_HOST,
-                "port": config.MQTT_BROKER_PORT,
-                "status": mqtt_status,
+            "redis": {
+                "status": redis_status,
             },
             "websocket": {
                 "status": websocket_status,
