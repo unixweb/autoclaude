@@ -354,6 +354,48 @@ services:
       retries: 3
       start_period: 20s
 
+  # ---------------------------------------------------------------------------
+  # MQTT Bridge Service (Standalone MQTT Client)
+  # ---------------------------------------------------------------------------
+  # Dedicated service that maintains MQTT connection and bridges to Redis.
+  # Eliminates threading conflicts in dashboard workers.
+  mqtt-bridge:
+    build:
+      context: ./mqtt-dashboard
+      dockerfile: Dockerfile.mqtt-service
+
+    container_name: app_mqtt_bridge
+
+    restart: unless-stopped
+
+    environment:
+      # MQTT Configuration
+      - MQTT_BROKER_HOST=${MQTT_BROKER_HOST:-mosquitto}
+      - MQTT_BROKER_PORT=${MQTT_BROKER_PORT:-1883}
+      - MQTT_USERNAME=${MQTT_USERNAME:-}
+      - MQTT_PASSWORD=${MQTT_PASSWORD:-}
+
+      # Redis Configuration
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+
+    networks:
+      - app_network
+
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; from app.redis_client import RedisClient; r = RedisClient(host=os.environ.get('REDIS_HOST', 'redis'), port=int(os.environ.get('REDIS_PORT', '6379')), password=os.environ.get('REDIS_PASSWORD') or None); exit(0 if r.is_connected() else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
 # =============================================================================
 # NETZWERKE (Networks)
 # =============================================================================
