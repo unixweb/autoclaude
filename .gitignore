@@ -30,3 +30,4 @@ build/
 node_modules/
 .npm
 .pnpm-store
+app/

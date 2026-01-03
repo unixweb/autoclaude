@@ -194,12 +194,7 @@ main() {
     if [ $# -eq 0 ]; then
         # Default command from Dockerfile
         exec gunicorn \
-            --bind 0.0.0.0:5000 \
-            --worker-class eventlet \
-            --workers 1 \
-            --timeout 60 \
-            --access-logfile - \
-            --error-logfile - \
+            --config /app/gunicorn.conf.py \
             wsgi:app &
     else
         # Custom command provided
