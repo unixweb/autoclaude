@@ -6,6 +6,7 @@ Runs as standalone service, maintains single MQTT connection.
 """
 
 import logging
+import threading
 import time
 from typing import Optional
 
@@ -58,6 +59,10 @@ class MQTTBridge:
         self._stats = BrokerStats()
         self._last_stats_publish = 0
         self.stats_publish_interval = 5  # Publish stats every 5s
+        self._stats_lock = threading.Lock()
+
+        # Track topic callbacks for cleanup
+        self._topic_callbacks = {}  # topic -> callback mapping
 
     def start(self) -> bool:
         """Start the bridge service."""
@@ -86,14 +91,15 @@ class MQTTBridge:
 
     def _handle_sys_message(self, topic: str, payload: str) -> None:
         """Handle message from $SYS topics."""
-        # Update stats cache
-        self._update_stats_from_sys(topic, payload)
+        with self._stats_lock:
+            # Update stats cache
+            self._update_stats_from_sys(topic, payload)
 
-        # Publish stats periodically
-        now = time.time()
-        if now - self._last_stats_publish >= self.stats_publish_interval:
-            self._publish_stats()
-            self._last_stats_publish = now
+            # Publish stats periodically
+            now = time.time()
+            if now - self._last_stats_publish >= self.stats_publish_interval:
+                self._publish_stats()
+                self._last_stats_publish = now
 
     def _update_stats_from_sys(self, topic: str, payload: str) -> None:
         """Update stats cache from $SYS topic."""
@@ -114,8 +120,8 @@ class MQTTBridge:
             try:
                 value = attr_type(payload)
                 setattr(self._stats, attr_name, value)
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as e:
+                logger.debug(f"Failed to parse {topic} with payload '{payload}': {e}")
 
     def _publish_stats(self) -> None:
         """Publish broker stats to Redis."""
@@ -140,27 +146,52 @@ class MQTTBridge:
 
         if cmd_type == MessageTypes.CMD_PUBLISH:
             topic = command.get("topic", "")
+            if not topic:
+                logger.error("Publish command missing topic")
+                return
+
             payload = command.get("payload", "")
             qos = command.get("qos", 0)
+
+            # Validate QoS
+            if qos not in (0, 1, 2):
+                logger.error(f"Invalid QoS value: {qos}, must be 0, 1, or 2")
+                return
+
             retain = command.get("retain", False)
 
-            self.mqtt_client.publish(topic, payload, qos=qos, retain=retain)
-            logger.info(f"Published to {topic}")
+            success = self.mqtt_client.publish(topic, payload, qos=qos, retain=retain)
+            if success:
+                logger.info(f"Published to {topic}")
+            else:
+                logger.error(f"Failed to publish to {topic}")
 
         elif cmd_type == MessageTypes.CMD_SUBSCRIBE:
             topic = command.get("topic", "")
             qos = command.get("qos", 0)
 
-            # Subscribe and forward messages to Redis
-            self.mqtt_client.subscribe(
-                topic,
-                lambda t, p: self._forward_mqtt_message(t, p),
-                qos=qos,
-            )
+            # Check if already subscribed
+            if topic in self._topic_callbacks:
+                logger.warning(f"Already subscribed to {topic}")
+                return
+
+            # Create and store callback
+            def callback(t, p):
+                self._forward_mqtt_message(t, p)
+
+            self._topic_callbacks[topic] = callback
+            self.mqtt_client.subscribe(topic, callback, qos=qos)
             logger.info(f"Subscribed to {topic}")
 
         elif cmd_type == MessageTypes.CMD_UNSUBSCRIBE:
             topic = command.get("topic", "")
+            if not topic:
+                logger.error("Unsubscribe command missing topic")
+                return
+
+            if topic in self._topic_callbacks:
+                del self._topic_callbacks[topic]
+
             self.mqtt_client.unsubscribe(topic)
             logger.info(f"Unsubscribed from {topic}")
 
@@ -186,7 +217,29 @@ class MQTTBridge:
 
     def stop(self) -> None:
         """Stop the bridge service."""
-        self._publish_status(connected=False)
-        self.mqtt_client.disconnect()
-        self.redis_client.disconnect()
+        try:
+            self._publish_status(connected=False)
+        except Exception as e:
+            logger.warning(f"Failed to publish final status: {e}")
+
+        try:
+            # Unsubscribe from dynamic topics
+            for topic in list(self._topic_callbacks.keys()):
+                try:
+                    self.mqtt_client.unsubscribe(topic)
+                except Exception as e:
+                    logger.warning(f"Failed to unsubscribe from {topic}: {e}")
+        except Exception as e:
+            logger.warning(f"Error during topic cleanup: {e}")
+
+        try:
+            self.mqtt_client.disconnect()
+        except Exception as e:
+            logger.error(f"Error disconnecting MQTT client: {e}")
+
+        try:
+            self.redis_client.disconnect()
+        except Exception as e:
+            logger.error(f"Error disconnecting Redis client: {e}")
+
         logger.info("Bridge stopped")
