@@ -567,32 +567,42 @@ def broadcast_stats() -> None:
 
 
 def start_background_stats_pusher() -> threading.Thread:
-    """
-    Start a background thread that periodically pushes broker stats.
-
-    Returns:
-        The background thread instance.
-    """
+    """Start background thread that broadcasts stats from Redis."""
 
     def stats_pusher_loop():
-        """Background loop that pushes stats at regular intervals."""
+        """Background loop that broadcasts stats."""
         import time
+        from app.redis_subscriber import get_redis_subscriber
 
-        logger.info(
-            f"Starting background stats pusher (interval: {STATS_PUSH_INTERVAL}s)"
-        )
+        logger.info("Starting background stats broadcaster")
 
+        subscriber = get_redis_subscriber()
+
+        # Set callback to broadcast stats to WebSocket clients
+        subscriber.set_stats_callback(lambda stats: broadcast_stats_data(stats))
+        subscriber.set_status_callback(lambda status: broadcast_status(status))
+
+        # Keep thread alive
         while True:
-            try:
-                time.sleep(STATS_PUSH_INTERVAL)
-                broadcast_stats()
-            except Exception as e:
-                logger.error(f"Error in stats pusher loop: {e}")
+            time.sleep(10)
 
     thread = threading.Thread(target=stats_pusher_loop, daemon=True)
     thread.start()
-
     return thread
+
+
+def broadcast_stats_data(stats: dict) -> None:
+    """Broadcast stats to all connected clients."""
+    socketio = get_socketio()
+    if socketio:
+        socketio.emit("broker_stats", stats, namespace="/", broadcast=True)
+
+
+def broadcast_status(status: dict) -> None:
+    """Broadcast status to all connected clients."""
+    socketio = get_socketio()
+    if socketio:
+        socketio.emit("broker_status", status, namespace="/", broadcast=True)
 
 
 def get_connected_client_count() -> int:

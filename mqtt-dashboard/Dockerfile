@@ -95,6 +95,11 @@ def create_production_app():
     )
     app.redis_client = redis_client
 
+    # Initialize Redis subscriber (replaces SysMonitor, TopicTracker, etc.)
+    from app.redis_subscriber import init_redis_subscriber
+    redis_subscriber = init_redis_subscriber(redis_client=redis_client)
+    app.redis_subscriber = redis_subscriber
+
     # Initialize Flask-SocketIO for WebSocket support
     socketio = init_socketio(app)
     app.socketio = socketio
