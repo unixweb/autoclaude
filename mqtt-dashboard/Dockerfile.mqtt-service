@@ -12,7 +12,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install curl for manual debugging and health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
@@ -34,9 +34,8 @@ RUN chown -R mqttservice:mqttservice /app
 # Switch to non-root user
 USER mqttservice
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD python -c "import os; from app.redis_client import RedisClient; r = RedisClient(host=os.environ.get('REDIS_HOST', 'redis'), port=int(os.environ.get('REDIS_PORT', '6379')), password=os.environ.get('REDIS_PASSWORD') or None); exit(0 if r.is_connected() else 1)"
+# Health check defined in docker-compose.yml for consistency
+# with other services and easier configuration management
 
 # Run the bridge service
 CMD ["python", "mqtt_service.py"]
