@@ -95,10 +95,20 @@ def create_production_app():
     )
     app.redis_client = redis_client
 
-    # Initialize Redis subscriber (replaces SysMonitor, TopicTracker, etc.)
+    # Initialize MQTT client for direct broker connection
+    from app.mqtt_client import init_mqtt_client
+    mqtt_client = init_mqtt_client(config)
+    app.mqtt_client = mqtt_client
+
+    # Initialize Redis subscriber for $SYS topics (stats)
     from app.redis_subscriber import init_redis_subscriber
     redis_subscriber = init_redis_subscriber(redis_client=redis_client)
     app.redis_subscriber = redis_subscriber
+
+    # Initialize SubscriptionManager for per-client topic subscriptions (uses MQTT directly)
+    from app.services.subscription_manager import init_subscription_manager
+    subscription_manager = init_subscription_manager(mqtt_client=mqtt_client)
+    app.subscription_manager = subscription_manager
 
     # Initialize Flask-SocketIO for WebSocket support
     socketio = init_socketio(app)

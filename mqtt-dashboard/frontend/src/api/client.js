@@ -44,7 +44,7 @@ export function getSocket() {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
     });
   }
   return socketInstance;

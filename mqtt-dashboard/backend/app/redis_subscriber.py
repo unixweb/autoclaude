@@ -84,8 +84,10 @@ class DashboardRedisSubscriber:
                 self._status_callback(message)
 
     def _handle_mqtt_message(self, message: dict) -> None:
-        """Handle MQTT message from Redis."""
+        """Handle MQTT message from Redis (not used - kept for compatibility)."""
         if message.get("type") == MessageTypes.MESSAGE_RECEIVED:
+            # Messages now come directly via MQTT, not Redis
+            # This handler is kept for future use if needed
             if self._message_callback:
                 self._message_callback(message)
 

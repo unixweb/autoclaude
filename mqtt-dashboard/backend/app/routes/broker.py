@@ -25,7 +25,7 @@ def get_broker_status():
     status = {
         "connected": redis_client.is_connected(),
         "broker": {
-            "host": "via mqtt-bridge",
+            "host": "mqtt-bridge",
             "port": 1883,
         },
     }

@@ -103,24 +103,97 @@ class MQTTBridge:
 
     def _update_stats_from_sys(self, topic: str, payload: str) -> None:
         """Update stats cache from $SYS topic."""
-        # Map topic to stats attribute
+        # Helper function to parse numeric values that may have units
+        def parse_int(value: str) -> int:
+            """Parse integer, stripping common suffixes like 'seconds'."""
+            return int(value.split()[0])
+
+        def parse_float(value: str) -> float:
+            """Parse float, stripping common suffixes."""
+            return float(value.split()[0])
+
+        # Comprehensive topic map for all broker statistics
         topic_map = {
+            # Broker information
             "$SYS/broker/version": ("version", str),
-            "$SYS/broker/uptime": ("uptime", int),
+            "$SYS/broker/uptime": ("uptime", parse_int),
+
+            # Client statistics
             "$SYS/broker/clients/connected": ("clients_connected", int),
+            "$SYS/broker/clients/disconnected": ("clients_disconnected", int),
             "$SYS/broker/clients/total": ("clients_total", int),
+            "$SYS/broker/clients/maximum": ("clients_maximum", int),
+            "$SYS/broker/clients/expired": ("clients_expired", int),
+
+            # Message statistics
             "$SYS/broker/messages/received": ("messages_received", int),
             "$SYS/broker/messages/sent": ("messages_sent", int),
+            "$SYS/broker/messages/stored": ("messages_stored", int),
+            "$SYS/broker/store/messages/count": ("messages_stored", int),  # Alternative
+            "$SYS/broker/messages/inflight": ("messages_inflight", int),
+
+            # Publish statistics
+            "$SYS/broker/publish/messages/received": ("publish_messages_received", int),
+            "$SYS/broker/publish/messages/sent": ("publish_messages_sent", int),
+            "$SYS/broker/publish/messages/dropped": ("publish_messages_dropped", int),
+
+            # Byte statistics
             "$SYS/broker/bytes/received": ("bytes_received", int),
             "$SYS/broker/bytes/sent": ("bytes_sent", int),
+            "$SYS/broker/publish/bytes/received": ("bytes_received", int),  # Some brokers use this
+            "$SYS/broker/publish/bytes/sent": ("bytes_sent", int),
+
+            # Subscription statistics
+            "$SYS/broker/subscriptions/count": ("subscriptions_count", int),
+
+            # Retained messages
+            "$SYS/broker/retained messages/count": ("retained_messages_count", int),
+
+            # Load statistics - messages
+            "$SYS/broker/load/messages/received/1min": ("load_messages_received_1min", parse_float),
+            "$SYS/broker/load/messages/received/5min": ("load_messages_received_5min", parse_float),
+            "$SYS/broker/load/messages/received/15min": ("load_messages_received_15min", parse_float),
+            "$SYS/broker/load/messages/sent/1min": ("load_messages_sent_1min", parse_float),
+            "$SYS/broker/load/messages/sent/5min": ("load_messages_sent_5min", parse_float),
+            "$SYS/broker/load/messages/sent/15min": ("load_messages_sent_15min", parse_float),
+
+            # Load statistics - bytes
+            "$SYS/broker/load/bytes/received/1min": ("load_bytes_received_1min", parse_float),
+            "$SYS/broker/load/bytes/received/5min": ("load_bytes_received_5min", parse_float),
+            "$SYS/broker/load/bytes/received/15min": ("load_bytes_received_15min", parse_float),
+            "$SYS/broker/load/bytes/sent/1min": ("load_bytes_sent_1min", parse_float),
+            "$SYS/broker/load/bytes/sent/5min": ("load_bytes_sent_5min", parse_float),
+            "$SYS/broker/load/bytes/sent/15min": ("load_bytes_sent_15min", parse_float),
+
+            # Load statistics - connections
+            "$SYS/broker/load/connections/1min": ("load_connections_1min", parse_float),
+            "$SYS/broker/load/connections/5min": ("load_connections_5min", parse_float),
+            "$SYS/broker/load/connections/15min": ("load_connections_15min", parse_float),
+
+            # Load statistics - publish
+            "$SYS/broker/load/publish/received/1min": ("load_publish_received_1min", parse_float),
+            "$SYS/broker/load/publish/received/5min": ("load_publish_received_5min", parse_float),
+            "$SYS/broker/load/publish/received/15min": ("load_publish_received_15min", parse_float),
+            "$SYS/broker/load/publish/sent/1min": ("load_publish_sent_1min", parse_float),
+            "$SYS/broker/load/publish/sent/5min": ("load_publish_sent_5min", parse_float),
+            "$SYS/broker/load/publish/sent/15min": ("load_publish_sent_15min", parse_float),
+
+            # Load statistics - sockets
+            "$SYS/broker/load/sockets/1min": ("load_sockets_1min", parse_float),
+            "$SYS/broker/load/sockets/5min": ("load_sockets_5min", parse_float),
+            "$SYS/broker/load/sockets/15min": ("load_sockets_15min", parse_float),
+
+            # Heap memory
+            "$SYS/broker/heap/current": ("heap_current", int),
+            "$SYS/broker/heap/maximum": ("heap_maximum", int),
         }
 
         if topic in topic_map:
-            attr_name, attr_type = topic_map[topic]
+            attr_name, converter = topic_map[topic]
             try:
-                value = attr_type(payload)
+                value = converter(payload)
                 setattr(self._stats, attr_name, value)
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError, IndexError) as e:
                 logger.debug(f"Failed to parse {topic} with payload '{payload}': {e}")
 
     def _publish_stats(self) -> None:

@@ -44,6 +44,7 @@ const initWebSocket = async () => {
     const socket = getSocket();
 
     socket.on("connect", () => {
+      console.log('Socket connected!');
       wsConnected.value = true;
       // Re-subscribe to all topics after reconnection
       subscriptions.value.forEach(topic => {
@@ -52,13 +53,20 @@ const initWebSocket = async () => {
     });
 
     socket.on("disconnect", () => {
+      console.log('Socket disconnected!');
       wsConnected.value = false;
     });
 
     // Listen for topic messages
     socket.on("topic_message", handleTopicMessage);
 
-    wsConnected.value = socket.connected;
+    // Set initial state
+    if (socket.connected) {
+      console.log('Socket already connected');
+      wsConnected.value = true;
+    } else {
+      console.log('Waiting for socket to connect...');
+    }
   } catch (error) {
     console.error("WebSocket connection failed:", error);
   }
@@ -99,9 +107,15 @@ const addSubscription = (topic) => {
   if (!topic || subscriptions.value.includes(topic)) return;
 
   const socket = getSocket();
-  if (socket && socket.connected) {
+  console.log('addSubscription called:', { topic, connected: socket?.connected, wsConnected: wsConnected.value });
+
+  // Always try to emit if we think we're connected
+  if (socket) {
     socket.emit("subscribe_topic", { topic });
     subscriptions.value.push(topic);
+    console.log('Emitted subscribe_topic for:', topic);
+  } else {
+    console.error('Socket not available!');
   }
 };
 

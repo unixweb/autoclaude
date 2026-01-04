@@ -59,8 +59,10 @@ def main() -> None:
     topic_tracker = init_topic_tracker(mqtt_client)
     app.logger.info("TopicTracker service initialized")
 
-    # Initialize SubscriptionManager for per-client topic subscriptions
-    subscription_manager = init_subscription_manager(mqtt_client)
+    # Initialize SubscriptionManager for per-client topic subscriptions (uses Redis)
+    from app.redis_client import get_redis_client
+    redis_client = get_redis_client()
+    subscription_manager = init_subscription_manager(redis_client)
     app.logger.info("SubscriptionManager service initialized")
 
     # Store references in app context

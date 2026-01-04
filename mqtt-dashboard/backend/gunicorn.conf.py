@@ -9,13 +9,12 @@ in each worker process when using eventlet workers.
 bind = "0.0.0.0:5000"
 
 # Worker processes
-worker_class = "sync"  # Simple synchronous worker
+worker_class = "gevent"  # Using gevent for Socket.IO polling support
 workers = 1
-threads = 1  # Single thread to avoid MQTT client ID conflicts
 preload_app = False  # Load app in each worker, not in master
 
 # Timeouts
-timeout = 120
+timeout = 300  # Increased for WebSocket long-polling
 graceful_timeout = 30
 keepalive = 5
 
